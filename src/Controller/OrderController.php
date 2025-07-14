@@ -34,10 +34,17 @@ final class OrderController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $order->setCreatedAt(new \DateTimeImmutable());
             $order->setStatus('Pending');
+
+            // Reduce stock for each product
+            foreach ($order->getProducts() as $product) {
+                $currentStock = $product->getStock();
+                $product->setStock($currentStock - 1);
+            }
+
             $entityManager->persist($order);
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_order_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_order_index');
         }
 
         return $this->render('order/new.html.twig', [
@@ -76,6 +83,22 @@ final class OrderController extends AbstractController
     public function delete(Request $request, Order $order, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$order->getId(), $request->getPayload()->getString('_token'))) {
+
+            // to prevent ordering out of stock items
+            foreach ($order->getProducts() as $product) {
+                if ($product->getStock() < 1) {
+                    $this->addFlash('error', 'Product '.$product->getName().' is out of stock!');
+                    return $this->redirectToRoute('order_new');
+                }
+            }
+
+
+            // Restore stock
+            foreach ($order->getProducts() as $product) {
+                $currentStock = $product->getStock();
+                $product->setStock($currentStock + 1);
+            }
+
             $entityManager->remove($order);
             $entityManager->flush();
         }
