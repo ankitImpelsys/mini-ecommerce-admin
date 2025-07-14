@@ -7,15 +7,16 @@
 
     <table class="table">
         <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>ImageFilename</th>
-                <th>actions</th>
-            </tr>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>ImageFilename</th>
+            <th>Image</th>
+            <th>actions</th>
+        </tr>
         </thead>
         <tbody>
         {% for product in products %}
@@ -26,6 +27,13 @@
                 <td>{{ product.price }}</td>
                 <td>{{ product.stock }}</td>
                 <td>{{ product.imageFilename }}</td>
+                <td>
+                    {% if product.imageFilename %}
+                        <img src="/uploads/products/{{ product.imageFilename }}" alt="" style="max-width:100px;">
+                    {% else %}
+                        No image
+                    {% endif %}
+                </td>
                 <td>
                     <a href="{{ path('app_product_show', {'id': product.id}) }}">show</a>
                     <a href="{{ path('app_product_edit', {'id': product.id}) }}">edit</a>

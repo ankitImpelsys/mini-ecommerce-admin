@@ -7,30 +7,35 @@
 
     <table class="table">
         <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ product.id }}</td>
-            </tr>
-            <tr>
-                <th>Name</th>
-                <td>{{ product.name }}</td>
-            </tr>
-            <tr>
-                <th>Description</th>
-                <td>{{ product.description }}</td>
-            </tr>
-            <tr>
-                <th>Price</th>
-                <td>{{ product.price }}</td>
-            </tr>
-            <tr>
-                <th>Stock</th>
-                <td>{{ product.stock }}</td>
-            </tr>
-            <tr>
-                <th>ImageFilename</th>
-                <td>{{ product.imageFilename }}</td>
-            </tr>
+        <tr>
+            <th>Id</th>
+            <td>{{ product.id }}</td>
+        </tr>
+        <tr>
+            <th>Name</th>
+            <td>{{ product.name }}</td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td>{{ product.description }}</td>
+        </tr>
+        <tr>
+            <th>Price</th>
+            <td>{{ product.price }}</td>
+        </tr>
+        <tr>
+            <th>Stock</th>
+            <td>{{ product.stock }}</td>
+        </tr>
+        <tr>
+            <th>ImageFilename</th>
+            {% if product.imageFilename %}
+                <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}"
+                     style="max-width:300px;">
+            {% else %}
+                <p>No image uploaded</p>
+            {% endif %}
+        </tr>
         </tbody>
     </table>
 
