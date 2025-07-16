@@ -1,18 +1,18 @@
-<!DOCTYPE html>
+{% extends 'base.html.twig' %}
 
-<title>Category index</title>
+{% block title %}Categories{% endblock %}
 
 {% block body %}
-    <h1>Category index</h1>
+    <h2>Categories</h2>
 
-    <table class="table">
+    <table>
         <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>actions</th>
-            </tr>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
         </thead>
         <tbody>
         {% for category in categories %}
@@ -21,17 +21,19 @@
                 <td>{{ category.name }}</td>
                 <td>{{ category.description }}</td>
                 <td>
-                    <a href="{{ path('app_category_show', {'id': category.id}) }}">show</a>
-                    <a href="{{ path('app_category_edit', {'id': category.id}) }}">edit</a>
+                    <a href="{{ path('app_category_show', {'id': category.id}) }}">Show</a> |
+                    <a href="{{ path('app_category_edit', {'id': category.id}) }}">Edit</a>
                 </td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">no records found</td>
+                <td colspan="4">No records found.</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
-    <a href="{{ path('app_category_new') }}">Create new</a>
+    <p>
+        <a href="{{ path('app_category_new') }}">Create new</a>
+    </p>
 {% endblock %}

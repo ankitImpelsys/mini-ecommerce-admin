@@ -1,34 +1,35 @@
-<!DOCTYPE html>
+{% extends 'base.html.twig' %}
 
-<title>Order</title>
+{% block title %}Order Details{% endblock %}
 
 {% block body %}
-    <h1>Order</h1>
+    <h2>Order Details</h2>
 
-    <table class="table">
+    <table>
         <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ order.id }}</td>
-            </tr>
-            <tr>
-                <th>CustomerName</th>
-                <td>{{ order.customerName }}</td>
-            </tr>
-            <tr>
-                <th>Status</th>
-                <td>{{ order.status }}</td>
-            </tr>
-            <tr>
-                <th>CreatedAt</th>
-                <td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
+        <tr>
+            <th>Id</th>
+            <td>{{ order.id }}</td>
+        </tr>
+        <tr>
+            <th>Customer Name</th>
+            <td>{{ order.customerName }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>{{ order.status }}</td>
+        </tr>
+        <tr>
+            <th>Created At</th>
+            <td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+        </tr>
         </tbody>
     </table>
 
-    <a href="{{ path('app_order_index') }}">back to list</a>
-
-    <a href="{{ path('app_order_edit', {'id': order.id}) }}">edit</a>
+    <p>
+        <a href="{{ path('app_order_index') }}">← Back to list</a> |
+        <a href="{{ path('app_order_edit', {'id': order.id}) }}">Edit</a>
+    </p>
 
     {{ include('order/_delete_form.html.twig') }}
 {% endblock %}
