@@ -6,52 +6,47 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\User
-                property: email  # or 'username' if you're using username-based login
+                property: email
 
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # JWT Login (stateless)
         login:
-            pattern:  ^/api/login_check
+            pattern: ^/api/login_check
             stateless: true
             json_login:
-                check_path:               /api/login_check
-                username_path:            username
-                password_path:            password
-                success_handler:          lexik_jwt_authentication.handler.authentication_success
-                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+                check_path: /api/login_check
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-        # Secured API routes with JWT
         api:
-            pattern:   ^/api
+            pattern: ^/api
             stateless: true
             provider: app_user_provider
             jwt: ~
 
-        # Web (form login)
         main:
             lazy: true
             provider: app_user_provider
             form_login:
                 login_path: login
-                check_path: login
+                check_path: login_check  # Changed this to avoid conflict
+                default_target_path: /admin  # Redirect after successful login
             logout:
                 path: logout
-                target: /
-            # session-based; NOT stateless
+                target: /login  # Redirect to login page after logout
+            remember_me:
+                secret: '%kernel.secret%'
 
     access_control:
-        # Public access for login
-        - { path: ^/api/login_check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-
-        # Secure API with JWT
+        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
-        # Admin panel example
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/logout, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/admin, roles: ROLE_ADMIN }
-
-        # Default rule for everything else (web access)
-        - { path: ^/, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # Remove the catch-all rule that was causing issues
+        # - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
