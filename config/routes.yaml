@@ -1,3 +1,21 @@
+# Web login routes
+login:
+    path: /login
+    controller: App\Controller\LoginController::login
+
+login_check:
+    path: /login_check
+    # This is handled by Symfony security system
+
+logout:
+    path: /logout
+    controller: App\Controller\LoginController::logout
+
+# API login route
+api_login_check:
+    path: /api/login_check
+    # This is handled by JWT bundle
+
 controllers:
     resource:
         path: ../src/Controller/

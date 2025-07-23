@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
-
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -56,6 +55,14 @@ final class ProductApiController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
+        if ($data === null) {
+            return $this->json(['error' => 'Invalid JSON'], 400);
+        }
+
+        if (!isset($data['name'], $data['price'], $data['stock'])) {
+            return $this->json(['error' => 'Missing required fields: name, price, stock'], 400);
+        }
+
         $product = new Product();
         $product->setName($data['name']);
         $product->setDescription($data['description'] ?? null);
@@ -65,7 +72,10 @@ final class ProductApiController extends AbstractController
         $entityManager->persist($product);
         $entityManager->flush();
 
-        return $this->json(['status' => 'Product created!', 'id' => $product->getId()]);
+        return $this->json([
+            'status' => 'Product created!',
+            'id' => $product->getId()
+        ], 201);
     }
 
     #[Route('/{id}', methods: ['PUT'])]
@@ -73,6 +83,14 @@ final class ProductApiController extends AbstractController
     public function update(Request $request, Product $product, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        if ($data === null) {
+            return $this->json(['error' => 'Invalid JSON'], 400);
+        }
+
+        if (!isset($data['name'], $data['price'], $data['stock'])) {
+            return $this->json(['error' => 'Missing required fields: name, price, stock'], 400);
+        }
 
         $product->setName($data['name']);
         $product->setDescription($data['description'] ?? null);
@@ -94,3 +112,4 @@ final class ProductApiController extends AbstractController
         return $this->json(['status' => 'Product deleted']);
     }
 }
+
