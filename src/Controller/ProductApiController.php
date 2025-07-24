@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\ProductDTO;
 use App\Entity\Product;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,35 +20,18 @@ final class ProductApiController extends AbstractController
     {
         $products = $productRepository->findAll();
 
-        $data = [];
-        foreach ($products as $product) {
-            $data[] = [
-                'id' => $product->getId(),
-                'name' => $product->getName(),
-                'description' => $product->getDescription(),
-                'price' => $product->getPrice(),
-                'stock' => $product->getStock(),
-                'image' => $product->getImageFilename(),
-            ];
-        }
+        $dtos = array_map(fn(Product $product) => new ProductDTO($product), $products);
 
-        return $this->json($data);
+        return $this->json($dtos);
     }
+
 
     #[Route('/{id}', methods: ['GET'])]
     public function show(Product $product): JsonResponse
     {
-        $data = [
-            'id' => $product->getId(),
-            'name' => $product->getName(),
-            'description' => $product->getDescription(),
-            'price' => $product->getPrice(),
-            'stock' => $product->getStock(),
-            'image' => $product->getImageFilename(),
-        ];
-
-        return $this->json($data);
+        return $this->json(new ProductDTO($product));
     }
+
 
     #[Route('', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
