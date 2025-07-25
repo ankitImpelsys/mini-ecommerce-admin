@@ -96,4 +96,3 @@ final class ProductApiController extends AbstractController
         return $this->json(['status' => 'Product deleted']);
     }
 }
-

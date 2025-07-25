@@ -23,3 +23,4 @@ class ProductDTO
         $this->image = $product->getImageFilename();
     }
 }
+

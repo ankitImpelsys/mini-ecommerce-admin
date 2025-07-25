@@ -23,8 +23,8 @@
     </table>
 
     <p>
-        <a href="{{ path('category_index') }}">← Back to list</a> |
-        <a href="{{ path('category_edit', {'id': category.id}) }}">Edit</a>
+        <a href="{{ path('app_category_index') }}">← Back to list</a> |
+        <a href="{{ path('app_category_edit', {'id': category.id}) }}">Edit</a>
     </p>
 
     {{ include('category/_delete_form.html.twig') }}
