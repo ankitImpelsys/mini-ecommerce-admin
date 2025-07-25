@@ -3,14 +3,16 @@
 {% block title %}Product List{% endblock %}
 
 {% block body %}
-    <h2>Products</h2>
-    <a href="{{ path('app_product_new') }}">Add Product</a>
-    <table>
-        <thead>
+    <h2 class="mb-4">Products</h2>
+
+    <a href="{{ path('app_product_new') }}" class="btn btn-success mb-3">Add Product</a>
+
+    <table class="table table-bordered">
+        <thead class="table-dark">
         <tr>
             <th>ID</th>
             <th>Name</th>
-            <th>Price</th>
+            <th>Price (₹)</th>
             <th>Stock</th>
             <th>Actions</th>
         </tr>
@@ -23,10 +25,14 @@
                 <td>{{ product.price }}</td>
                 <td>{{ product.stock }}</td>
                 <td>
-                    <a href="{{ path('app_product_show', {id: product.id}) }}">View</a> |
-                    <a href="{{ path('app_product_edit', {id: product.id}) }}">Edit</a> |
+                    <a href="{{ path('app_product_show', {id: product.id}) }}" class="btn btn-sm btn-info">View</a>
+                    <a href="{{ path('app_product_edit', {id: product.id}) }}" class="btn btn-sm btn-warning">Edit</a>
                     {{ include('product/_delete_form.html.twig') }}
                 </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No products found.</td>
             </tr>
         {% endfor %}
         </tbody>

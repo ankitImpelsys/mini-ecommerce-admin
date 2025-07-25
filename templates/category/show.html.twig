@@ -3,12 +3,12 @@
 {% block title %}Category Details{% endblock %}
 
 {% block body %}
-    <h2>Category Details</h2>
+    <h2 class="mb-3">Category Details</h2>
 
-    <table>
+    <table class="table table-striped">
         <tbody>
         <tr>
-            <th>Id</th>
+            <th>ID</th>
             <td>{{ category.id }}</td>
         </tr>
         <tr>
@@ -22,10 +22,8 @@
         </tbody>
     </table>
 
-    <p>
-        <a href="{{ path('app_category_index') }}">← Back to list</a> |
-        <a href="{{ path('app_category_edit', {'id': category.id}) }}">Edit</a>
-    </p>
+    <a href="{{ path('app_category_index') }}" class="btn btn-secondary me-2">← Back to list</a>
+    <a href="{{ path('app_category_edit', {'id': category.id}) }}" class="btn btn-warning me-2">Edit</a>
 
     {{ include('category/_delete_form.html.twig') }}
 {% endblock %}

@@ -4,8 +4,7 @@
 
 {% block body %}
     <h2>Add Product</h2>
-    {{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button>Save</button>
-    {{ form_end(form) }}
+    {{ include('product/_form.html.twig') }}
+
+    <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
 {% endblock %}
