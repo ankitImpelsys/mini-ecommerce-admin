@@ -42,7 +42,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for product in category.products %}
+            {% for product in category.activeProducts %}
                 <tr>
                     <td>{{ product.id }}</td>
                     <td>{{ product.name }}</td>
