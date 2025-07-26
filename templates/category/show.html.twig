@@ -50,14 +50,17 @@
                     <td>{{ product.stock }}</td>
                     <td>
                         {% if product.imageFilename %}
-                            <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}" style="max-width: 60px; max-height: 60px;">
+                            <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}"
+                                 style="max-width: 60px; max-height: 60px;">
                         {% else %}
                             <span class="text-muted">No image</span>
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ path('app_product_show', {id: product.id}) }}" class="btn btn-sm btn-primary">View</a>
-                        <a href="{{ path('app_product_edit', {id: product.id}) }}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{{ path('app_product_show', {id: product.id}) }}"
+                           class="btn btn-sm btn-primary">View</a>
+                        <a href="{{ path('app_product_edit', {id: product.id}) }}"
+                           class="btn btn-sm btn-warning">Edit</a>
                     </td>
                 </tr>
             {% endfor %}
@@ -66,4 +69,11 @@
     {% else %}
         <p class="text-muted">No products in this category yet.</p>
     {% endif %}
+
+    <h3 class="mt-5">Add New Product to This Category</h3>
+
+    <div class="mb-3">
+        {{ include('product/_form.html.twig', {'form': form, 'button_label': 'Add Product'}) }}
+    </div>
+
 {% endblock %}
