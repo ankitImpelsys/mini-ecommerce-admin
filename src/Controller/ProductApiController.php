@@ -18,7 +18,7 @@ final class ProductApiController extends AbstractController
     #[Route('', methods: ['GET'])]
     public function index(ProductRepository $productRepository): JsonResponse
     {
-        $products = $productRepository->findAll();
+        $products = $productRepository->findAllActive();
 
         $dtos = array_map(fn(Product $product) => new ProductDTO($product), $products);
 
