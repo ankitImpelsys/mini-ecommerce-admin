@@ -99,4 +99,11 @@ class Order
         return $this;
     }
 
+    public function getActiveProducts(): array
+    {
+        return array_filter($this->products->toArray(), function (Product $product) {
+            return !$product->isDeleted();
+        });
+    }
+
 }
