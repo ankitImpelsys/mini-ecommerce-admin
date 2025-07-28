@@ -73,6 +73,8 @@ final class ProductController extends AbstractController
             $entityManager->persist($product);
             $entityManager->flush();
 
+            $this->addFlash('success', 'Product added successfully.');
+
             return $this->redirectToRoute('app_product_index');
         }
 
@@ -122,6 +124,7 @@ final class ProductController extends AbstractController
             }
 
             $entityManager->flush();
+            $this->addFlash('success', 'Product edited successfully.');
 
             return $this->redirectToRoute('app_product_index');
         }

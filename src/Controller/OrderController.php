@@ -49,6 +49,8 @@ final class OrderController extends AbstractController
             $entityManager->persist($order);
             $entityManager->flush();
 
+            $this->addFlash('success', 'Order created.');
+
             return $this->redirectToRoute('app_order_index');
         }
 
@@ -77,6 +79,8 @@ final class OrderController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
+
+            $this->addFlash('success', 'Order edited successfully.');
 
             return $this->redirectToRoute('app_order_index', [], Response::HTTP_SEE_OTHER);
         }
