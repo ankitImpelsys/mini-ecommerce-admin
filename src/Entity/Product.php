@@ -32,6 +32,24 @@ class Product
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?Category $category = null;
 
+    #[ORM\Column(type: 'boolean')]
+    private bool $isDeleted = false;
+
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    private ?User $user = null;
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+        return $this;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -106,6 +124,17 @@ class Product
     {
         $this->category = $category;
 
+        return $this;
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
         return $this;
     }
 }

@@ -29,6 +29,21 @@ class Order
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    private ?User $user = null;
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+        return $this;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -97,6 +112,13 @@ class Order
     {
         $this->products->removeElement($product);
         return $this;
+    }
+
+    public function getActiveProducts(): array
+    {
+        return array_filter($this->products->toArray(), function (Product $product) {
+            return !$product->isDeleted();
+        });
     }
 
 }

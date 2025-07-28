@@ -22,7 +22,7 @@ final class CategoryController extends AbstractController
     public function index(CategoryRepository $categoryRepository): Response
     {
         return $this->render('category/index.html.twig', [
-            'categories' => $categoryRepository->findAll(),
+            'categories' => $categoryRepository->findAllByUser($this->getUser()),
         ]);
     }
 
@@ -34,6 +34,9 @@ final class CategoryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            $category->setUser($this->getUser());
+
             $entityManager->persist($category);
             $entityManager->flush();
 
