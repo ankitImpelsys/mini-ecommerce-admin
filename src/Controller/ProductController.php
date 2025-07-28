@@ -32,7 +32,7 @@ final class ProductController extends AbstractController
     public function index(ProductRepository $productRepository): Response
     {
         return $this->render('product/index.html.twig', [
-            'products' => $productRepository->findAllActive(),
+            'products' => $productRepository->findAllActiveByUser($this->getUser()),
         ]);
     }
 
@@ -63,6 +63,8 @@ final class ProductController extends AbstractController
 
                 $product->setImageFilename($newFilename);
             }
+
+            $product->setUser($this->getUser());
 
             $entityManager->persist($product);
             $entityManager->flush();

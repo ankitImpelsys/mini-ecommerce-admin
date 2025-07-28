@@ -20,7 +20,7 @@ final class OrderController extends AbstractController
     public function index(OrderRepository $orderRepository): Response
     {
         return $this->render('order/index.html.twig', [
-            'orders' => $orderRepository->findAll(),
+            'orders' => $orderRepository->findAllByUser($this->getUser()),
         ]);
     }
 
@@ -28,10 +28,15 @@ final class OrderController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $order = new Order();
-        $form = $this->createForm(OrderType::class, $order);
+        $form = $this->createForm(OrderType::class, $order, [
+            'current_user' => $this->getUser(),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            $order->setUser($this->getUser());
+
             $order->setCreatedAt(new \DateTimeImmutable());
             $order->setStatus('Pending');
 

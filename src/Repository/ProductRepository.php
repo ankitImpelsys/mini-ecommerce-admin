@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Product;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -23,6 +24,18 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findAllActiveByUser(User $user): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.isDeleted = false')
+            ->andWhere('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
 
     //    /**
     //     * @return Product[] Returns an array of Product objects

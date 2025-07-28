@@ -15,6 +15,8 @@ class OrderType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $currentUser = $options['current_user'];
+
         $builder
             ->add('customerName')
             ->add('status', ChoiceType::class, [
@@ -32,9 +34,11 @@ class OrderType extends AbstractType
                 'choice_label' => 'name',
                 'multiple' => true,
                 'expanded' => true,
-                'query_builder' => function (ProductRepository $repo) {
+                'query_builder' => function (ProductRepository $repo) use ($currentUser) {
                     return $repo->createQueryBuilder('p')
-                        ->where('p.isDeleted = false');
+                        ->where('p.user = :user')
+                        ->andWhere('p.isDeleted = false')
+                        ->setParameter('user', $currentUser);
                 },
             ]);
     }
@@ -43,6 +47,7 @@ class OrderType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Order::class,
+            'current_user' => null, // allow injection
         ]);
     }
 }
