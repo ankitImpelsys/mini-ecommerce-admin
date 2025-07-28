@@ -55,10 +55,16 @@ final class CategoryController extends AbstractController
         $product = new Product();
         $product->setCategory($category); // Set category manually
 
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductType::class, $product, [
+            'is_embedded_in_category' => true,
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $product->setCategory($category);
+            $product->setUser($this->getUser()); // 🔥 THIS LINE SETS THE USER
+
             $em->persist($product);
             $em->flush();
 

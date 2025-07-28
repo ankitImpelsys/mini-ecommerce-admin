@@ -40,7 +40,8 @@ final class ProductController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $product = new Product();
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductType::class, $product); // default is_embedded_in_category = false
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

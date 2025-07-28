@@ -1,0 +1,15 @@
+Invalid credentials.:
+    'Incorrect email or password. Please try again.'
+Username could not be found.:
+    'User not found.'
+
+# Optional: Add more overrides if needed
+Account is disabled.:
+    'Your account has been disabled. Please contact support.'
+Account is locked.:
+    'Your account has been locked due to multiple failed login attempts.'
+Account has expired.:
+    'Your account has expired.'
+Credentials have expired.:
+    'Your password has expired.'
+
