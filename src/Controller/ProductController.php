@@ -40,7 +40,10 @@ final class ProductController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $product = new Product();
-        $form = $this->createForm(ProductType::class, $product); // default is_embedded_in_category = false
+        $form = $this->createForm(ProductType::class, $product, [
+            'is_embedded_in_category' => false,
+            'current_user' => $this->getUser(),
+        ]);
 
         $form->handleRequest($request);
 
@@ -91,7 +94,11 @@ final class ProductController extends AbstractController
     #[Route('/{id}/edit', name: 'app_product_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Product $product, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductType::class, $product, [
+            'is_embedded_in_category' => false,
+            'current_user' => $this->getUser(),
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

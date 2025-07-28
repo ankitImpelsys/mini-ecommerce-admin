@@ -57,6 +57,7 @@ final class CategoryController extends AbstractController
 
         $form = $this->createForm(ProductType::class, $product, [
             'is_embedded_in_category' => true,
+            'current_user' => $this->getUser(),
         ]);
 
         $form->handleRequest($request);

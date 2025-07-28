@@ -12,6 +12,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
 
+
 class ProductType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -39,6 +40,8 @@ class ProductType extends AbstractType
                 ],
             ]);
 
+        $user = $options['current_user'];
+
         if ($options['is_embedded_in_category']) {
             // Hidden category field if embedded inside a category
             $builder->add('category', HiddenType::class, [
@@ -51,6 +54,11 @@ class ProductType extends AbstractType
                 'class' => Category::class,
                 'choice_label' => 'name',
                 'placeholder' => 'Choose a category',
+                'query_builder' => function (\Doctrine\ORM\EntityRepository $er) use ($user) {
+                    return $er->createQueryBuilder('c')
+                        ->where('c.user = :user')
+                        ->setParameter('user', $user);
+                },
             ]);
         }
     }
@@ -60,6 +68,7 @@ class ProductType extends AbstractType
         $resolver->setDefaults([
             'data_class' => Product::class,
             'is_embedded_in_category' => false, // default is not embedded
+            'current_user' => null,
         ]);
     }
 }
