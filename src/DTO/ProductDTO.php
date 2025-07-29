@@ -11,15 +11,14 @@ class ProductDTO
     public int $stock;
     public ?string $description;
     public ?int $categoryId;
-    public string $requested_at;
 
-    public function __construct(Product $product, \DateTimeImmutable $requestedAt)
+
+    public function __construct(Product $product)
     {
         $this->name = $product->getName();
         $this->price = $product->getPrice();
         $this->stock = $product->getStock();
         $this->description = $product->getDescription();
         $this->categoryId = $product->getCategory()?->getId();
-        $this->requested_at = $requestedAt->format(\DateTime::ATOM); // ISO 8601 format
     }
 }

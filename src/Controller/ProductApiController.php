@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\DTO\ApiResponseDTO;
 use App\DTO\ProductDTO;
 use App\Entity\Category;
 use App\Entity\Product;
@@ -21,47 +22,39 @@ final class ProductApiController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function index(ProductRepository $productRepository): JsonResponse
     {
-        $requestedAt = new \DateTimeImmutable();
-        $user = $this->getUser();
         $products = $productRepository->findBy([
-            'user' => $user,
+            'user' => $this->getUser(),
             'isDeleted' => false
         ]);
 
-        $dtos = array_map(fn(Product $product) => new ProductDTO($product, $requestedAt), $products);
+        $dtos = array_map(fn(Product $product) => new ProductDTO($product), $products);
 
-        return $this->json($dtos);
+        return $this->json(new ApiResponseDTO($dtos));
     }
 
     #[Route('/{id}', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function show(Product $product): JsonResponse
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        // Ensure the user owns the product
         if ($product->getUser() !== $this->getUser() || $product->isDeleted()) {
-            return $this->json(['error' => 'Product not found or unauthorized'], 403);
+            return $this->json(new ApiResponseDTO(['error' => 'Product not found or unauthorized']), 403);
         }
 
-        $requestedAt = new \DateTimeImmutable();
-
-        return $this->json(new ProductDTO($product, $requestedAt));
+        return $this->json(new ApiResponseDTO(new ProductDTO($product)));
     }
 
     #[Route('', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request, EntityManagerInterface $entityManager, CategoryRepository $categoryRepo): JsonResponse
     {
-        $requestedAt = new \DateTimeImmutable();
         $data = json_decode($request->getContent(), true);
 
         if ($data === null) {
-            return $this->json(['error' => 'Invalid JSON'], 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), 400);
         }
 
         if (!isset($data['name'], $data['price'], $data['stock'])) {
-            return $this->json(['error' => 'Missing required fields: name, price, stock'], 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), 400);
         }
 
         $product = new Product();
@@ -72,24 +65,22 @@ final class ProductApiController extends AbstractController
         $product->setIsDeleted(false);
         $product->setUser($this->getUser());
 
-        // Optional: set category if provided
         if (isset($data['category_id'])) {
             $category = $categoryRepo->find($data['category_id']);
             if ($category && $category->getUser() === $this->getUser()) {
                 $product->setCategory($category);
             } else {
-                return $this->json(['error' => 'Invalid or unauthorized category'], 403);
+                return $this->json(new ApiResponseDTO(['error' => 'Invalid or unauthorized category']), 403);
             }
         }
 
         $entityManager->persist($product);
         $entityManager->flush();
 
-        return $this->json([
+        return $this->json(new ApiResponseDTO([
             'status' => 'Product created!',
-            'id' => $product->getId(),
-            'requested_at' => $requestedAt->format(\DateTime::ATOM)
-        ], 201);
+            'id' => $product->getId()
+        ]), 201);
     }
 
     #[Route('/{id}', methods: ['PUT'])]
@@ -101,29 +92,18 @@ final class ProductApiController extends AbstractController
         CategoryRepository     $categoryRepo
     ): JsonResponse
     {
-        $requestedAt = new \DateTimeImmutable();
-
         if ($product->getUser() !== $this->getUser() || $product->isDeleted()) {
-            return $this->json([
-                'error' => 'Product not found or unauthorized',
-                'requested_at' => $requestedAt->format(\DateTime::ATOM),
-            ], 403);
+            return $this->json(new ApiResponseDTO(['error' => 'Product not found or unauthorized']), 403);
         }
 
         $data = json_decode($request->getContent(), true);
 
         if ($data === null) {
-            return $this->json([
-                'error' => 'Invalid JSON',
-                'requested_at' => $requestedAt->format(\DateTime::ATOM),
-            ], 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), 400);
         }
 
         if (!isset($data['name'], $data['price'], $data['stock'])) {
-            return $this->json([
-                'error' => 'Missing required fields: name, price, stock',
-                'requested_at' => $requestedAt->format(\DateTime::ATOM),
-            ], 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), 400);
         }
 
         $product->setName($data['name']);
@@ -131,42 +111,35 @@ final class ProductApiController extends AbstractController
         $product->setPrice($data['price']);
         $product->setStock($data['stock']);
 
-        // Update category
         if (isset($data['category_id'])) {
             $category = $categoryRepo->find($data['category_id']);
             if ($category && $category->getUser() === $this->getUser()) {
                 $product->setCategory($category);
             } else {
-                return $this->json([
-                    'error' => 'Invalid or unauthorized category',
-                    'requested_at' => $requestedAt->format(\DateTime::ATOM),
-                ], 403);
+                return $this->json(new ApiResponseDTO(['error' => 'Invalid or unauthorized category']), 403);
             }
         }
 
         $entityManager->flush();
 
-        return $this->json([
+        return $this->json(new ApiResponseDTO([
             'status' => 'Product updated!',
-            'requested_at' => $requestedAt->format(\DateTime::ATOM),
-        ]);
+        ]));
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN')]
     public function delete(Product $product, EntityManagerInterface $entityManager): JsonResponse
     {
-        $requestedAt = new \DateTimeImmutable();
         if ($product->getUser() !== $this->getUser() || $product->isDeleted()) {
-            return $this->json(['error' => 'Product not found or unauthorized'], 403);
+            return $this->json(new ApiResponseDTO(['error' => 'Product not found or unauthorized']), 403);
         }
 
-        $product->setIsDeleted(true); // Soft delete
+        $product->setIsDeleted(true);
         $entityManager->flush();
 
-        return $this->json([
+        return $this->json(new ApiResponseDTO([
             'status' => 'Product soft-deleted',
-            'requested_at' => $requestedAt->format(\DateTime::ATOM)
-        ]);
+        ]));
     }
 }
