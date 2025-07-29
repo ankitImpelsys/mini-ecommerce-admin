@@ -6,21 +6,20 @@ use App\Entity\Product;
 
 class ProductDTO
 {
-    public int $id;
     public string $name;
-    public ?string $description;
     public float $price;
     public int $stock;
-    public ?string $image;
+    public ?string $description;
+    public ?int $categoryId;
+    public string $requested_at;
 
-    public function __construct(Product $product)
+    public function __construct(Product $product, \DateTimeImmutable $requestedAt)
     {
-        $this->id = $product->getId();
         $this->name = $product->getName();
-        $this->description = $product->getDescription();
         $this->price = $product->getPrice();
         $this->stock = $product->getStock();
-        $this->image = $product->getImageFilename();
+        $this->description = $product->getDescription();
+        $this->categoryId = $product->getCategory()?->getId();
+        $this->requested_at = $requestedAt->format(\DateTime::ATOM); // ISO 8601 format
     }
 }
-
