@@ -10,7 +10,7 @@ class ProductDTO
     public float $price;
     public int $stock;
     public ?string $description;
-    public ?int $categoryId;
+    public string $categoryId;
 
 
     public function __construct(Product $product)
@@ -19,6 +19,6 @@ class ProductDTO
         $this->price = $product->getPrice();
         $this->stock = $product->getStock();
         $this->description = $product->getDescription();
-        $this->categoryId = $product->getCategory()?->getId();
+        $this->categoryId = base64_encode((String)$product->getCategory()?->getId());
     }
 }
