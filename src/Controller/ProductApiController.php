@@ -8,6 +8,7 @@ use App\Entity\Category;
 use App\Entity\Product;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
+use App\Service\Encryptor;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,32 +16,35 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+
 #[Route('/api/products')]
 final class ProductApiController extends AbstractController
 {
+
     #[Route('', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function index(ProductRepository $productRepository): JsonResponse
+    public function index(ProductRepository $productRepository, Encryptor $encryptor): JsonResponse
     {
+
         $products = $productRepository->findBy([
             'user' => $this->getUser(),
             'isDeleted' => false
         ]);
 
-        $dtos = array_map(fn(Product $product) => new ProductDTO($product), $products);
+        $dtos = array_map(fn(Product $product) => new ProductDTO($product, $encryptor($product->categoryId)));
 
         return $this->json(new ApiResponseDTO($dtos));
     }
 
     #[Route('/{id}', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function show(Product $product): JsonResponse
+    public function show(Product $product, Encryptor $encryptor): JsonResponse
     {
         if (!$this->isOwnedByCurrentUser($product) || $product->isDeleted()) {
             return $this->unauthorizedResponse();
         }
 
-        return $this->json(new ApiResponseDTO(new ProductDTO($product)));
+        return $this->json(new ApiResponseDTO(new ProductDTO($product, $encryptor)));
     }
 
     #[Route('', methods: ['POST'])]
@@ -137,7 +141,6 @@ final class ProductApiController extends AbstractController
         return $this->json(new ApiResponseDTO(['status' => 'Product soft-deleted']));
     }
 
-    // ✅ PROTECTED UTILITY METHODS
 
     protected function isOwnedByCurrentUser($entity): bool
     {

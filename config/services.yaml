@@ -7,6 +7,9 @@ parameters:
     products_images_directory: '%kernel.project_dir%/public/uploads/products'
 
 services:
+    App\Service\Encryptor:
+        arguments:
+            $appEncryptionKey: '%env(APP_ENCRYPTION_KEY)%'
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
