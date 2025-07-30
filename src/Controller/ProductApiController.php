@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/products')]
-final class ProductApiController extends AbstractController
+class ProductApiController extends AbstractController
 {
     #[Route('', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
