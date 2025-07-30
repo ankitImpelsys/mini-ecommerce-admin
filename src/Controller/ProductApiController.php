@@ -36,8 +36,8 @@ final class ProductApiController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function show(Product $product): JsonResponse
     {
-        if ($product->getUser() !== $this->getUser() || $product->isDeleted()) {
-            return $this->json(new ApiResponseDTO(['error' => 'Product not found or unauthorized']), 403);
+        if (!$this->isOwnedByCurrentUser($product) || $product->isDeleted()) {
+            return $this->unauthorizedResponse();
         }
 
         return $this->json(new ApiResponseDTO(new ProductDTO($product)));
@@ -67,11 +67,10 @@ final class ProductApiController extends AbstractController
 
         if (isset($data['category_id'])) {
             $category = $categoryRepo->find($data['category_id']);
-            if ($category && $category->getUser() === $this->getUser()) {
-                $product->setCategory($category);
-            } else {
-                return $this->json(new ApiResponseDTO(['error' => 'Invalid or unauthorized category']), 403);
+            if (!$category || !$this->isOwnedByCurrentUser($category)) {
+                return $this->unauthorizedResponse('Invalid or unauthorized category');
             }
+            $product->setCategory($category);
         }
 
         $entityManager->persist($product);
@@ -86,14 +85,14 @@ final class ProductApiController extends AbstractController
     #[Route('/{id}', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
     public function update(
-        Request                $request,
-        Product                $product,
+        Request $request,
+        Product $product,
         EntityManagerInterface $entityManager,
-        CategoryRepository     $categoryRepo
+        CategoryRepository $categoryRepo
     ): JsonResponse
     {
-        if ($product->getUser() !== $this->getUser() || $product->isDeleted()) {
-            return $this->json(new ApiResponseDTO(['error' => 'Product not found or unauthorized']), 403);
+        if (!$this->isOwnedByCurrentUser($product) || $product->isDeleted()) {
+            return $this->unauthorizedResponse();
         }
 
         $data = json_decode($request->getContent(), true);
@@ -113,33 +112,40 @@ final class ProductApiController extends AbstractController
 
         if (isset($data['category_id'])) {
             $category = $categoryRepo->find($data['category_id']);
-            if ($category && $category->getUser() === $this->getUser()) {
-                $product->setCategory($category);
-            } else {
-                return $this->json(new ApiResponseDTO(['error' => 'Invalid or unauthorized category']), 403);
+            if (!$category || !$this->isOwnedByCurrentUser($category)) {
+                return $this->unauthorizedResponse('Invalid or unauthorized category');
             }
+            $product->setCategory($category);
         }
 
         $entityManager->flush();
 
-        return $this->json(new ApiResponseDTO([
-            'status' => 'Product updated!',
-        ]));
+        return $this->json(new ApiResponseDTO(['status' => 'Product updated!']));
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN')]
     public function delete(Product $product, EntityManagerInterface $entityManager): JsonResponse
     {
-        if ($product->getUser() !== $this->getUser() || $product->isDeleted()) {
-            return $this->json(new ApiResponseDTO(['error' => 'Product not found or unauthorized']), 403);
+        if (!$this->isOwnedByCurrentUser($product) || $product->isDeleted()) {
+            return $this->unauthorizedResponse();
         }
 
         $product->setIsDeleted(true);
         $entityManager->flush();
 
-        return $this->json(new ApiResponseDTO([
-            'status' => 'Product soft-deleted',
-        ]));
+        return $this->json(new ApiResponseDTO(['status' => 'Product soft-deleted']));
+    }
+
+    // ✅ PROTECTED UTILITY METHODS
+
+    protected function isOwnedByCurrentUser($entity): bool
+    {
+        return method_exists($entity, 'getUser') && $entity->getUser() === $this->getUser();
+    }
+
+    protected function unauthorizedResponse(string $message = 'Product not found or unauthorized'): JsonResponse
+    {
+        return $this->json(new ApiResponseDTO(['error' => $message]), 403);
     }
 }
