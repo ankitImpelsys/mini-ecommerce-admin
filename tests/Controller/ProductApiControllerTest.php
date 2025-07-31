@@ -2,103 +2,87 @@
 
 namespace App\Tests\Controller;
 
-use App\Controller\ProductApiController;
-use App\Entity\Category;
 use App\Entity\Product;
+use App\Entity\User;
 use App\Repository\ProductRepository;
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\Response;
 
-class ProductApiControllerTest extends TestCase
+class ProductApiControllerTest extends WebTestCase
 {
-    public function testIndexReturnsJsonResponseWithUserProducts(): void
+    public function testIndexReturnsUserProducts(): void
     {
-        // Mock user
-        $user = $this->createMock(UserInterface::class);
+        $client = static::createClient();
+        $container = self::getContainer();
 
-        // Mock category 1
-        $category1 = $this->createMock(Category::class);
-        $category1->method('getId')->willReturn(1);
+        $entityManager = $container->get(EntityManagerInterface::class);
 
-        // Mock product 1
-        $product1 = $this->createMock(Product::class);
-        $product1->method('getName')->willReturn('Product A');
-        $product1->method('getPrice')->willReturn(100.0);
-        $product1->method('getStock')->willReturn(10);
-        $product1->method('getDescription')->willReturn('Description A');
-        $product1->method('getCategory')->willReturn($category1);
+        // Simulate a user with ROLE_ADMIN
+        $user = new User();
+        $user->setRoles(['ROLE_ADMIN']);
+        $user->setEmail('admin_' . uniqid() . '@example.com');
+        $user->setPassword('$2y$13$examplehashedpasswordstring...'); // hashed dummy password
 
-        // Mock category 2
-        $category2 = $this->createMock(Category::class);
-        $category2->method('getId')->willReturn(2);
+        $entityManager->persist($user);
+        $entityManager->flush();
 
-        // Mock product 2
-        $product2 = $this->createMock(Product::class);
-        $product2->method('getName')->willReturn('Product B');
-        $product2->method('getPrice')->willReturn(200.0);
-        $product2->method('getStock')->willReturn(5);
-        $product2->method('getDescription')->willReturn('Description B');
-        $product2->method('getCategory')->willReturn($category2);
+        // Login the user
+        $client->loginUser($user);
 
-        // Mock product repository
-        $productRepository = $this->createMock(ProductRepository::class);
-        $productRepository->expects($this->once())
-            ->method('findBy')
-            ->with(['user' => $user, 'isDeleted' => false])
-            ->willReturn([$product1, $product2]);
+        // Create a product for this user
+        $product = new Product();
+        $product->setName('Test Product');
+        $product->setPrice(100);
+        $product->setStock(10);
+        $product->setUser($user);
+        $product->setIsDeleted(false);
 
-        // Mock controller and override getUser() and json()
-        $controller = $this->getMockBuilder(ProductApiController::class)
-            ->onlyMethods(['getUser', 'json'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $entityManager->persist($product);
+        $entityManager->flush();
 
-        $controller->method('getUser')->willReturn($user);
-        $controller->method('json')->willReturnCallback(function ($data) {
-            return new JsonResponse($data);
-        });
+        // Call the endpoint
+        $client->request('GET', '/api/products');
 
-        // Call controller method
-        $response = $controller->index($productRepository);
-
-        // Assert JSON response
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
-
-        $data = json_decode($response->getContent(), true);
-        $this->assertArrayHasKey('data', $data);
-        $this->assertCount(2, $data['data']);
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $this->assertStringContainsString('Test Product', $client->getResponse()->getContent());
     }
 
-    public function testIndexReturnsEmptyArrayIfNoProductsFound(): void
+    public function testShowReturnsProductForAuthorizedUser(): void
     {
-        $user = $this->createMock(UserInterface::class);
+        $client = static::createClient();
+        $container = self::getContainer();
 
-        $productRepository = $this->createMock(ProductRepository::class);
-        $productRepository->expects($this->once())
-            ->method('findBy')
-            ->with(['user' => $user, 'isDeleted' => false])
-            ->willReturn([]);
+        $entityManager = $container->get(EntityManagerInterface::class);
 
-        $controller = $this->getMockBuilder(ProductApiController::class)
-            ->onlyMethods(['getUser', 'json'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        // Create and persist user
+        $user = new User();
+        $user->setEmail('admin_' . uniqid() . '@example.com');
 
-        $controller->method('getUser')->willReturn($user);
-        $controller->method('json')->willReturnCallback(function ($data) {
-            return new JsonResponse($data);
-        });
+        $user->setRoles(['ROLE_ADMIN']);
+        $user->setPassword('$2y$13$examplehashedpasswordstring...');
 
-        $response = $controller->index($productRepository);
+        $entityManager->persist($user);
+        $entityManager->flush();
 
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
+        $client->loginUser($user);
 
-        $data = json_decode($response->getContent(), true);
-        $this->assertArrayHasKey('data', $data);
-        $this->assertIsArray($data['data']);
-        $this->assertCount(0, $data['data']);
+        // Create and persist product
+        $product = new Product();
+        $product->setName('Test Product');
+        $product->setPrice(99.99);
+        $product->setStock(10);
+        $product->setUser($user);
+        $product->setIsDeleted(false);
+
+        $entityManager->persist($product);
+        $entityManager->flush();
+
+        $client->request('GET', '/api/products/' . $product->getId());
+
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $this->assertStringContainsString('Test Product', $client->getResponse()->getContent());
     }
 }
