@@ -1,6 +1,17 @@
-{{ form_start(form) }}
-<div class="form-group">
-    {{ form_widget(form) }}
+{{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+
+<div class="mb-3">
+    {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
+    {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+    {{ form_errors(form.name) }}
 </div>
-<button class="btn btn-primary mt-2">{{ button_label|default('Save') }}</button>
+
+<div class="mb-3">
+    {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
+    {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
+    {{ form_errors(form.description) }}
+</div>
+
+<button type="submit" class="btn btn-primary">{{ button_label|default('Save') }}</button>
+
 {{ form_end(form) }}

@@ -5,11 +5,7 @@
 {% block body %}
     <h2 class="mb-3">Edit Category</h2>
 
-    <div class="mb-3">
-        {{ include('category/_form.html.twig', {'button_label': 'Update'}) }}
-    </div>
+    {{ include('category/_form.html.twig', {'button_label': 'Update'}) }}
 
-    <a href="{{ path('app_category_index') }}" class="btn btn-secondary me-2">← Back to list</a>
-
-
+    <a href="{{ path('app_category_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
 {% endblock %}
