@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\Category;
 use App\Entity\Product;
 use App\Entity\User;
 use App\Repository\ProductRepository;
@@ -132,5 +133,63 @@ class ProductApiControllerTest extends WebTestCase
         $this->assertEquals('Product created!', $json['data']['status']);
         $this->assertArrayHasKey('id', $json['data']);
     }
+
+    public function testUpdateProductForAuthorizedUser(): void
+    {
+        $client = static::createClient();
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+
+        // Create a user
+        $user = new User();
+        $user->setEmail('admin_' . uniqid() . '@example.com');
+        $user->setPassword('$2y$13$examplehashedpasswordstring...');
+        $user->setRoles(['ROLE_ADMIN']);
+        $entityManager->persist($user);
+
+        // Create a category (if required by product)
+        $category = new Category();
+        $category->setName('Test Category');
+        $entityManager->persist($category);
+
+        // Create a product
+        $product = new Product();
+        $product->setName('Old Product');
+        $product->setPrice(100);
+        $product->setStock(10);
+        $product->setUser($user);
+        $product->setCategory($category);
+        $product->setIsDeleted(false);
+        $entityManager->persist($product);
+
+        $entityManager->flush();
+
+        // Login user
+        $client->loginUser($user);
+
+        // Prepare updated data
+        $updatedData = [
+            'name' => 'Updated Product',
+            'price' => 199.99,
+            'stock' => 15,
+            'categoryId' => $category->getId(),
+        ];
+
+        // Send PUT request
+        $client->request(
+            'PUT',
+            '/api/products/' . $product->getId(),
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($updatedData)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+        $this->assertEquals('Product updated!', $json['data']['status']);
+    }
+
 
 }
