@@ -191,5 +191,51 @@ class ProductApiControllerTest extends WebTestCase
         $this->assertEquals('Product updated!', $json['data']['status']);
     }
 
+    public function testDeleteProductForAuthorizedUser(): void
+    {
+        $client = static::createClient();
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+
+        // Create user
+        $user = new User();
+        $user->setEmail('delete_' . uniqid() . '@example.com');
+        $user->setPassword('$2y$13$examplehashedpasswordstring...');
+        $user->setRoles(['ROLE_ADMIN']);
+        $entityManager->persist($user);
+
+        // Create category (if needed)
+        $category = new Category();
+        $category->setName('Delete Category');
+        $entityManager->persist($category);
+
+        // Create product
+        $product = new Product();
+        $product->setName('Product To Delete');
+        $product->setPrice(50);
+        $product->setStock(5);
+        $product->setUser($user);
+        $product->setCategory($category);
+        $product->setIsDeleted(false);
+        $entityManager->persist($product);
+
+        $entityManager->flush();
+
+        // Login the user
+        $client->loginUser($user);
+
+        // Send DELETE request
+        $client->request(
+            'DELETE',
+            '/api/products/' . $product->getId()
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+        $this->assertEquals('Product deleted', $json['data']['status']);
+    }
+
+
 
 }

@@ -134,7 +134,7 @@ class ProductApiController extends AbstractController
         $product->setIsDeleted(true);
         $entityManager->flush();
 
-        return $this->json(new ApiResponseDTO(['status' => 'Product soft-deleted']));
+        return $this->json(new ApiResponseDTO(['status' => 'Product deleted']));
     }
 
     // ✅ PROTECTED UTILITY METHODS
