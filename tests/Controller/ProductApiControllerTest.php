@@ -85,4 +85,52 @@ class ProductApiControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
         $this->assertStringContainsString('Test Product', $client->getResponse()->getContent());
     }
+
+    public function testCreateProductForAuthorizedUser(): void
+    {
+        $client = static::createClient();
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+
+        // Create a unique user
+        $user = new User();
+        $user->setEmail('admin_' . uniqid() . '@example.com');
+        $user->setPassword('$2y$13$examplehashedpasswordstring...');
+        $user->setRoles(['ROLE_ADMIN']);
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        // Login the user
+        $client->loginUser($user);
+
+        // Make sure a category with ID 1 exists (or adjust this)
+        $categoryId = 1;
+
+        // Create product data
+        $postData = [
+            'name' => 'New Product',
+            'price' => 149.99,
+            'stock' => 20,
+            'categoryId' => $categoryId,
+        ];
+
+        // Send POST request
+        $client->request(
+            'POST',
+            '/api/products',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($postData)
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(Response::HTTP_CREATED, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+        $this->assertArrayHasKey('data', $json);
+        $this->assertEquals('Product created!', $json['data']['status']);
+        $this->assertArrayHasKey('id', $json['data']);
+    }
+
 }
