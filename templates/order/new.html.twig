@@ -4,14 +4,24 @@
 
 {% block body %}
     <div class="content-header mb-4">
-        <h2>Create New Order</h2>
+        <h2>
+            <i class="fas fa-plus-circle me-2"></i>
+            Create New Order
+        </h2>
     </div>
 
-    <div class="card p-4 shadow-sm">
-        {{ include('order/_form.html.twig') }}
+    <div class="content-card">
+        <div class="content-body">
+            <div class="modern-form">
+                {{ include('order/_form.html.twig') }}
+            </div>
+        </div>
     </div>
 
-    <a href="{{ path('app_order_index') }}" class="btn-modern btn-secondary mt-3">
-        ← Back to list
-    </a>
+    <div class="mt-3">
+        <a href="{{ path('app_order_index') }}" class="btn-modern btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Orders
+        </a>
+    </div>
 {% endblock %}
