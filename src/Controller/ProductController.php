@@ -47,6 +47,11 @@ final class ProductController extends AbstractController
 
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
+        }
+
+
         if ($form->isSubmitted() && $form->isValid()) {
             /** @var UploadedFile $imageFile */
             $imageFile = $form->get('imageFile')->getData();
@@ -102,6 +107,11 @@ final class ProductController extends AbstractController
         ]);
 
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
+        }
+
 
         if ($form->isSubmitted() && $form->isValid()) {
             $imageFile = $form->get('imageFile')->getData();
