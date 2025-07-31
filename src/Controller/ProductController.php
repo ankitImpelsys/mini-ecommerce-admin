@@ -32,7 +32,7 @@ final class ProductController extends AbstractController
     public function index(ProductRepository $productRepository): Response
     {
         return $this->render('product/index.html.twig', [
-            'products' => $productRepository->findAll(),
+            'products' => $productRepository->findAllActiveByUser($this->getUser()),
         ]);
     }
 
@@ -40,8 +40,17 @@ final class ProductController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $product = new Product();
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductType::class, $product, [
+            'is_embedded_in_category' => false,
+            'current_user' => $this->getUser(),
+        ]);
+
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
+        }
+
 
         if ($form->isSubmitted() && $form->isValid()) {
             /** @var UploadedFile $imageFile */
@@ -64,10 +73,14 @@ final class ProductController extends AbstractController
                 $product->setImageFilename($newFilename);
             }
 
+            $product->setUser($this->getUser());
+
             $entityManager->persist($product);
             $entityManager->flush();
 
-            return $this->redirectToRoute('product_index');
+            $this->addFlash('success', 'Product added successfully.');
+
+            return $this->redirectToRoute('app_product_index');
         }
 
 
@@ -88,8 +101,17 @@ final class ProductController extends AbstractController
     #[Route('/{id}/edit', name: 'app_product_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Product $product, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductType::class, $product, [
+            'is_embedded_in_category' => false,
+            'current_user' => $this->getUser(),
+        ]);
+
         $form->handleRequest($request);
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
+        }
+
 
         if ($form->isSubmitted() && $form->isValid()) {
             $imageFile = $form->get('imageFile')->getData();
@@ -112,6 +134,7 @@ final class ProductController extends AbstractController
             }
 
             $entityManager->flush();
+            $this->addFlash('success', 'Product edited successfully.');
 
             return $this->redirectToRoute('app_product_index');
         }
@@ -124,13 +147,15 @@ final class ProductController extends AbstractController
 
 
     #[Route('/{id}', name: 'app_product_delete', methods: ['POST'])]
-    public function delete(Request $request, Product $product, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, Product $product, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $product->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($product);
-            $entityManager->flush();
+        if ($this->isCsrfTokenValid('delete' . $product->getId(), $request->request->get('_token'))) {
+            $product->setIsDeleted(true);
+            $em->flush();
+            $this->addFlash('success', 'Product soft-deleted successfully.');
         }
 
-        return $this->redirectToRoute('app_product_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_product_index');
     }
+
 }

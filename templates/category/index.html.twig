@@ -3,10 +3,12 @@
 {% block title %}Categories{% endblock %}
 
 {% block body %}
-    <h2>Categories</h2>
+    <h2 class="mb-4">Category List</h2>
 
-    <table>
-        <thead>
+    <a href="{{ path('app_category_new') }}" class="btn btn-success mb-3">➕ Create New</a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
         <tr>
             <th>Id</th>
             <th>Name</th>
@@ -21,19 +23,15 @@
                 <td>{{ category.name }}</td>
                 <td>{{ category.description }}</td>
                 <td>
-                    <a href="{{ path('app_category_show', {'id': category.id}) }}">Show</a> |
-                    <a href="{{ path('app_category_edit', {'id': category.id}) }}">Edit</a>
+                    <a href="{{ path('app_category_show', {'id': category.id}) }}" class="btn btn-sm btn-info">Show</a>
+                    <a href="{{ path('app_category_edit', {'id': category.id}) }}" class="btn btn-sm btn-warning">Edit</a>
                 </td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">No records found.</td>
+                <td colspan="4" class="text-center text-muted">No records found.</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
-
-    <p>
-        <a href="{{ path('app_category_new') }}">Create new</a>
-    </p>
 {% endblock %}

@@ -20,7 +20,7 @@ final class OrderController extends AbstractController
     public function index(OrderRepository $orderRepository): Response
     {
         return $this->render('order/index.html.twig', [
-            'orders' => $orderRepository->findAll(),
+            'orders' => $orderRepository->findAllByUser($this->getUser()),
         ]);
     }
 
@@ -28,10 +28,15 @@ final class OrderController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $order = new Order();
-        $form = $this->createForm(OrderType::class, $order);
+        $form = $this->createForm(OrderType::class, $order, [
+            'current_user' => $this->getUser(),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            $order->setUser($this->getUser());
+
             $order->setCreatedAt(new \DateTimeImmutable());
             $order->setStatus('Pending');
 
@@ -43,6 +48,8 @@ final class OrderController extends AbstractController
 
             $entityManager->persist($order);
             $entityManager->flush();
+
+            $this->addFlash('success', 'Order created.');
 
             return $this->redirectToRoute('app_order_index');
         }
@@ -64,11 +71,16 @@ final class OrderController extends AbstractController
     #[Route('/{id}/edit', name: 'app_order_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Order $order, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->createForm(OrderType::class, $order);
+        $form = $this->createForm(OrderType::class, $order, [
+            'current_user' => $this->getUser(),
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
+
+            $this->addFlash('success', 'Order edited successfully.');
 
             return $this->redirectToRoute('app_order_index', [], Response::HTTP_SEE_OTHER);
         }

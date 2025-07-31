@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Category;
+use App\Entity\Product;
 use App\Form\CategoryType;
+use App\Form\ProductType;
 use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +22,7 @@ final class CategoryController extends AbstractController
     public function index(CategoryRepository $categoryRepository): Response
     {
         return $this->render('category/index.html.twig', [
-            'categories' => $categoryRepository->findAll(),
+            'categories' => $categoryRepository->findAllByUser($this->getUser()),
         ]);
     }
 
@@ -32,6 +34,9 @@ final class CategoryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            $category->setUser($this->getUser());
+
             $entityManager->persist($category);
             $entityManager->flush();
 
@@ -44,11 +49,33 @@ final class CategoryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_category_show', methods: ['GET'])]
-    public function show(Category $category): Response
+    #[Route('/category/{id}', name: 'app_category_show', methods: ['GET', 'POST'])]
+    public function show(Category $category, Request $request, EntityManagerInterface $em): Response
     {
+        $product = new Product();
+        $product->setCategory($category); // Set category manually
+
+        $form = $this->createForm(ProductType::class, $product, [
+            'is_embedded_in_category' => true,
+            'current_user' => $this->getUser(),
+        ]);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $product->setCategory($category);
+            $product->setUser($this->getUser()); // 🔥 THIS LINE SETS THE USER
+
+            $em->persist($product);
+            $em->flush();
+
+            $this->addFlash('success', 'Product added successfully.');
+            return $this->redirectToRoute('app_category_show', ['id' => $category->getId()]);
+        }
+
         return $this->render('category/show.html.twig', [
             'category' => $category,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -73,7 +100,7 @@ final class CategoryController extends AbstractController
     #[Route('/{id}', name: 'app_category_delete', methods: ['POST'])]
     public function delete(Request $request, Category $category, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$category->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $category->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($category);
             $entityManager->flush();
         }

@@ -5,10 +5,10 @@
 {% block body %}
     <h2>Product Details</h2>
 
-    <table>
+    <table class="table table-striped">
         <tbody>
         <tr>
-            <th>Id</th>
+            <th>ID</th>
             <td>{{ product.id }}</td>
         </tr>
         <tr>
@@ -21,7 +21,7 @@
         </tr>
         <tr>
             <th>Price</th>
-            <td>{{ product.price }}</td>
+            <td>₹ {{ product.price }}</td>
         </tr>
         <tr>
             <th>Stock</th>
@@ -31,19 +31,19 @@
             <th>Image</th>
             <td>
                 {% if product.imageFilename %}
-                    <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}" style="max-width:300px; border:1px solid #ccc; padding:5px;">
+                    <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 300px;">
                 {% else %}
                     <p>No image uploaded</p>
                 {% endif %}
             </td>
         </tr>
+        <tr>
+            <th>Category</th>
+            <td>{{ product.category ? product.category.name : 'None' }}</td>
+        </tr>
         </tbody>
     </table>
 
-    <p>
-        <a href="{{ path('app_product_index') }}">← Back to list</a> |
-        <a href="{{ path('app_product_edit', {'id': product.id}) }}">Edit</a>
-    </p>
+    <a href="{{ path('app_product_index') }}" class="btn btn-secondary">← Back to list</a>
 
-    {{ include('product/_delete_form.html.twig') }}
 {% endblock %}

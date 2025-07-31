@@ -7,7 +7,5 @@
 
     {{ include('order/_form.html.twig') }}
 
-    <p>
-        <a href="{{ path('app_order_index') }}">← Back to list</a>
-    </p>
+    <a href="{{ path('app_order_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
 {% endblock %}

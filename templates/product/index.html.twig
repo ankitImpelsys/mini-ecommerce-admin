@@ -3,30 +3,44 @@
 {% block title %}Product List{% endblock %}
 
 {% block body %}
-    <h2>Products</h2>
-    <a href="{{ path('app_product_new') }}">Add Product</a>
-    <table>
-        <thead>
+    <h2 class="mb-4">Products</h2>
+
+    <a href="{{ path('app_product_new') }}" class="btn btn-success mb-3">Add Product</a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
         <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Actions</th>
+            <th class="text-center" style="vertical-align: middle;">ID</th>
+            <th class="text-center" style="vertical-align: middle;">Name</th>
+            <th class="text-center" style="vertical-align: middle;">Price (₹)</th>
+            <th class="text-center" style="vertical-align: middle;">Stock</th>
+            <th class="text-center" style="vertical-align: middle;">Actions</th>
         </tr>
         </thead>
         <tbody>
         {% for product in products %}
             <tr>
-                <td>{{ product.id }}</td>
-                <td>{{ product.name }}</td>
-                <td>{{ product.price }}</td>
-                <td>{{ product.stock }}</td>
-                <td>
-                    <a href="{{ path('app_product_show', {id: product.id}) }}">View</a> |
-                    <a href="{{ path('app_product_edit', {id: product.id}) }}">Edit</a> |
-                    {{ include('product/_delete_form.html.twig') }}
+                <td class="text-center" style="vertical-align: middle;">{{ product.id }}</td>
+                <td class="text-center" style="vertical-align: middle;">{{ product.name }}</td>
+                <td class="text-center" style="vertical-align: middle;">{{ product.price }}</td>
+                <td class="text-center" style="vertical-align: middle;">{{ product.stock }}</td>
+                <td style="padding-top: 1px; padding-bottom: 14px; text-align: center; vertical-align: middle;">
+                    <form method="get" action="{{ path('app_product_show', {id: product.id}) }}" style="display: inline-block; margin: 0 2px;">
+                        <button type="submit" class="btn btn-sm btn-info">View</button>
+                    </form>
+
+                    <form method="get" action="{{ path('app_product_edit', {id: product.id}) }}" style="display: inline-block; margin: 0 2px;">
+                        <button type="submit" class="btn btn-sm btn-warning">Edit</button>
+                    </form>
+
+                    <div style="display: inline-block; margin: 0 2px;">
+                        {{ include('product/_delete_form.html.twig') }}
+                    </div>
                 </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No products found.</td>
             </tr>
         {% endfor %}
         </tbody>

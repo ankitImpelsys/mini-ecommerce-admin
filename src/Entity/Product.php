@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProductRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 class Product
@@ -21,9 +22,11 @@ class Product
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Assert\PositiveOrZero(message: 'Price must be zero or positive.')]
     private ?float $price = null;
 
     #[ORM\Column]
+    #[Assert\PositiveOrZero(message: 'Stock must be zero or positive.')]
     private ?int $stock = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -31,6 +34,24 @@ class Product
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?Category $category = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isDeleted = false;
+
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    private ?User $user = null;
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+        return $this;
+    }
 
     public function getId(): ?int
     {
@@ -106,6 +127,17 @@ class Product
     {
         $this->category = $category;
 
+        return $this;
+    }
+
+    public function isDeleted(): bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
         return $this;
     }
 }

@@ -3,12 +3,12 @@
 {% block title %}Category Details{% endblock %}
 
 {% block body %}
-    <h2>Category Details</h2>
+    <h2 class="mb-3">Category Details</h2>
 
-    <table>
+    <table class="table table-striped">
         <tbody>
         <tr>
-            <th>Id</th>
+            <th>ID</th>
             <td>{{ category.id }}</td>
         </tr>
         <tr>
@@ -22,10 +22,58 @@
         </tbody>
     </table>
 
-    <p>
-        <a href="{{ path('category_index') }}">← Back to list</a> |
-        <a href="{{ path('category_edit', {'id': category.id}) }}">Edit</a>
-    </p>
+    <a href="{{ path('app_category_index') }}" class="btn btn-secondary me-2">← Back to list</a>
+    <a href="{{ path('app_category_edit', {'id': category.id}) }}" class="btn btn-warning me-2">Edit</a>
 
     {{ include('category/_delete_form.html.twig') }}
+
+    <h3 class="mt-5">Products in this Category</h3>
+
+    {% if category.products|length > 0 %}
+        <table class="table table-bordered mt-3">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price (₹)</th>
+                <th>Stock</th>
+                <th>Image</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in category.activeProducts %}
+                <tr>
+                    <td>{{ product.id }}</td>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.price }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>
+                        {% if product.imageFilename %}
+                            <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}"
+                                 style="max-width: 60px; max-height: 60px;">
+                        {% else %}
+                            <span class="text-muted">No image</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ path('app_product_show', {id: product.id}) }}"
+                           class="btn btn-sm btn-primary">View</a>
+                        <a href="{{ path('app_product_edit', {id: product.id}) }}"
+                           class="btn btn-sm btn-warning">Edit</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No products in this category yet.</p>
+    {% endif %}
+
+    <h3 class="mt-5">Add New Product to This Category</h3>
+
+    <div class="mb-3">
+        {{ include('product/_form.html.twig', {'form': form, 'button_label': 'Add Product'}) }}
+    </div>
+
 {% endblock %}
