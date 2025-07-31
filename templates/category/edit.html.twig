@@ -3,9 +3,31 @@
 {% block title %}Edit Category{% endblock %}
 
 {% block body %}
-    <h2 class="mb-3">Edit Category</h2>
+    <div class="content-header">
+        <h2>Edit Category</h2>
+        <nav class="breadcrumb-nav">
+            <a href="{{ path('app_category_index') }}" class="breadcrumb-link">Categories</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('app_category_show', {'id': category.id}) }}" class="breadcrumb-link">{{ category.name }}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">Edit</span>
+        </nav>
+    </div>
 
-    {{ include('category/_form.html.twig', {'button_label': 'Update'}) }}
+    <div class="content-body">
+        <div class="form-container">
+            {{ include('category/_form.html.twig', {'button_label': 'Update Category'}) }}
+        </div>
 
-    <a href="{{ path('app_category_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
+        <div class="form-actions mt-4">
+            <a href="{{ path('app_category_show', {'id': category.id}) }}" class="btn-modern btn-secondary me-2">
+                <i class="fas fa-arrow-left"></i>
+                Back to Details
+            </a>
+            <a href="{{ path('app_category_index') }}" class="btn-modern btn-secondary">
+                <i class="fas fa-list"></i>
+                All Categories
+            </a>
+        </div>
+    </div>
 {% endblock %}

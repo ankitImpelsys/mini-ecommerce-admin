@@ -3,9 +3,25 @@
 {% block title %}New Category{% endblock %}
 
 {% block body %}
-    <h2>Create New Category</h2>
+    <div class="content-header">
+        <h2>Create New Category</h2>
+        <nav class="breadcrumb-nav">
+            <a href="{{ path('app_category_index') }}" class="breadcrumb-link">Categories</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">New</span>
+        </nav>
+    </div>
 
-    {{ include('category/_form.html.twig') }}
+    <div class="content-body">
+        <div class="form-container">
+            {{ include('category/_form.html.twig') }}
+        </div>
 
-    <a href="{{ path('app_category_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
+        <div class="form-actions mt-4">
+            <a href="{{ path('app_category_index') }}" class="btn-modern btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Categories
+            </a>
+        </div>
+    </div>
 {% endblock %}

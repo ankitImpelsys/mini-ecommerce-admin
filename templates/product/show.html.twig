@@ -3,47 +3,38 @@
 {% block title %}Product Details{% endblock %}
 
 {% block body %}
-    <h2>Product Details</h2>
+    <div class="container py-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-light p-2 rounded mb-4">
+                <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ path('app_product_index') }}">Products</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Details</li>
+            </ol>
+        </nav>
 
-    <table class="table table-striped">
-        <tbody>
-        <tr>
-            <th>ID</th>
-            <td>{{ product.id }}</td>
-        </tr>
-        <tr>
-            <th>Name</th>
-            <td>{{ product.name }}</td>
-        </tr>
-        <tr>
-            <th>Description</th>
-            <td>{{ product.description }}</td>
-        </tr>
-        <tr>
-            <th>Price</th>
-            <td>₹ {{ product.price }}</td>
-        </tr>
-        <tr>
-            <th>Stock</th>
-            <td>{{ product.stock }}</td>
-        </tr>
-        <tr>
-            <th>Image</th>
-            <td>
-                {% if product.imageFilename %}
-                    <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 300px;">
-                {% else %}
-                    <p>No image uploaded</p>
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <th>Category</th>
-            <td>{{ product.category ? product.category.name : 'None' }}</td>
-        </tr>
-        </tbody>
-    </table>
+        <h2 class="mb-4">Product Details</h2>
 
-    <a href="{{ path('app_product_index') }}" class="btn btn-secondary">← Back to list</a>
+        <div class="card shadow-sm">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    {% if product.imageFilename %}
+                        <img src="/uploads/products/{{ product.imageFilename }}" class="img-fluid rounded-start" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="d-flex justify-content-center align-items-center h-100 text-muted">No Image</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text"><strong>Description:</strong> {{ product.description }}</p>
+                        <p class="card-text"><strong>Price:</strong> ₹{{ product.price }}</p>
+                        <p class="card-text"><strong>Stock:</strong> {{ product.stock }}</p>
+                        <p class="card-text"><strong>Category:</strong> {{ product.category ? product.category.name : 'None' }}</p>
 
+                        <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to Products</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

@@ -1,19 +1,25 @@
 {{ form_start(form) }}
-<div class="mb-3">
+<div class="form-group mb-3">
     {{ form_label(form.customerName) }}
     {{ form_widget(form.customerName, {'attr': {'class': 'form-control'}}) }}
 </div>
-<div class="mb-3">
+
+<div class="form-group mb-3">
     {{ form_label(form.status) }}
-    {{ form_widget(form.status, {'attr': {'class': 'form-control'}}) }}
+    {{ form_widget(form.status, {'attr': {'class': 'form-select'}}) }}
 </div>
-<div class="mb-3">
+
+<div class="form-group mb-3">
     {{ form_label(form.createdAt) }}
     {{ form_widget(form.createdAt, {'attr': {'class': 'form-control'}}) }}
 </div>
-<div class="mb-3">
+
+<div class="form-group mb-3">
     {{ form_label(form.products) }}
     {{ form_widget(form.products, {'attr': {'class': 'form-select'}}) }}
 </div>
-<button class="btn btn-primary mt-3">{{ button_label|default('Save') }}</button>
+
+<button class="btn-modern btn-primary mt-3">
+    {{ button_label|default('Save') }}
+</button>
 {{ form_end(form) }}
