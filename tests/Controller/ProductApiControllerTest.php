@@ -177,6 +177,51 @@ class ProductApiControllerTest extends WebTestCase
         $this->assertStringContainsString('price', json_encode($json));
     }
 
+    public function testCreateProductWithNegativeStock(): void
+    {
+        $client = static::createClient();
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+
+        // Create and persist a user
+        $user = new User();
+        $user->setEmail('stock_' . uniqid() . '@example.com');
+        $user->setPassword('$2y$13$examplehashedpasswordstring...');
+        $user->setRoles(['ROLE_ADMIN']);
+        $entityManager->persist($user);
+
+        // Create and persist a category
+        $category = new Category();
+        $category->setName('Stock Test Category');
+        $entityManager->persist($category);
+
+        $entityManager->flush();
+        $category->setUser($user);
+
+        $client->loginUser($user);
+
+        // Send POST request with negative stock
+        $client->request(
+            'POST',
+            '/api/products',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'name' => 'Invalid Stock Product',
+                'price' => 100,
+                'stock' => -5,
+                'category_id' => $category->getId() // Note: match the key used in your controller
+            ])
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+        $this->assertStringContainsString('stock', json_encode($json));
+    }
+
+
 
     public function testUpdateProductForAuthorizedUser(): void
     {
