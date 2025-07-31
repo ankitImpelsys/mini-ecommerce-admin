@@ -1,12 +1,21 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Product{% endblock %}
+{% block title %}{{ 'Edit Product' }}{% endblock %}
 
 {% block body %}
-    <h2>Edit Product</h2>
+    <div class="container py-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-light p-2 rounded mb-4">
+                <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ path('app_product_index') }}">Products</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ 'update' }}</li>
+            </ol>
+        </nav>
 
-    {{ include('product/_form.html.twig', {'button_label': 'Update'}) }}
+        <h2 class="mb-4">{{ 'Edit Product'}}</h2>
 
-    <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
+        {{ include('product/_form.html.twig', { button_label: button_label|default('Save') }) }}
 
+        <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to Products</a>
+    </div>
 {% endblock %}

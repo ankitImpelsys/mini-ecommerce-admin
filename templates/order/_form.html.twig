@@ -1,19 +1,481 @@
 {{ form_start(form) }}
-<div class="mb-3">
+
+<div class="form-group mb-3">
     {{ form_label(form.customerName) }}
-    {{ form_widget(form.customerName, {'attr': {'class': 'form-control'}}) }}
+    {{ form_widget(form.customerName) }}
+    {{ form_errors(form.customerName) }}
 </div>
-<div class="mb-3">
+
+<div class="form-group mb-3">
     {{ form_label(form.status) }}
-    {{ form_widget(form.status, {'attr': {'class': 'form-control'}}) }}
+    {{ form_widget(form.status) }}
+    {{ form_errors(form.status) }}
 </div>
-<div class="mb-3">
+
+<div class="form-group mb-3">
     {{ form_label(form.createdAt) }}
-    {{ form_widget(form.createdAt, {'attr': {'class': 'form-control'}}) }}
+    {{ form_widget(form.createdAt) }}
+    {{ form_errors(form.createdAt) }}
 </div>
-<div class="mb-3">
+
+<div class="form-group mb-4">
     {{ form_label(form.products) }}
-    {{ form_widget(form.products, {'attr': {'class': 'form-select'}}) }}
+    <div class="product-selector-container">
+        <!-- Search Input -->
+        <div class="product-search-wrapper mb-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text"
+                       id="productSearch"
+                       class="form-control"
+                       placeholder="Search products by name or category..."
+                       autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Selected Products Display -->
+        <div id="selectedProductsDisplay" class="selected-products-display mb-3" style="display: none;">
+            <h6 class="selected-products-title">
+                <i class="fas fa-shopping-cart me-2"></i>Selected Products
+            </h6>
+            <div id="selectedProductsList" class="selected-products-list"></div>
+        </div>
+
+        <!-- Hidden Original Select (for form submission) -->
+        <div style="display: none;">
+            {{ form_widget(form.products) }}
+        </div>
+
+        <!-- Product Results/Grid -->
+        <div id="productResults" class="product-results show-all"></div>
+
+        <!-- Instructions -->
+        <div class="product-selector-help">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Browse available products below or use search to filter. Click on products to add them to your order.
+            </small>
+        </div>
+    </div>
+    {{ form_errors(form.products) }}
 </div>
-<button class="btn btn-primary mt-3">{{ button_label|default('Save') }}</button>
+
+<button type="submit" class="btn-modern btn-primary">
+    <i class="fas fa-save me-2"></i>
+    {{ button_label|default('Save Order') }}
+</button>
+
 {{ form_end(form) }}
+
+<style>
+    .product-selector-container {
+        position: relative;
+    }
+
+    .product-search-wrapper .input-group-text {
+        background-color: var(--gray-50);
+        border-right: none;
+        color: var(--gray-500);
+    }
+
+    .product-search-wrapper .form-control {
+        border-left: none;
+        background-color: var(--white);
+    }
+
+    .product-search-wrapper .form-control:focus {
+        border-left: none;
+        box-shadow: 0 0 0 3px rgb(79 70 229 / 0.1);
+    }
+
+    .product-results {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        max-height: 400px;
+        overflow-y: auto;
+        box-shadow: var(--shadow-sm);
+        margin-top: 8px;
+    }
+
+    .product-results.show-all {
+        position: static;
+        max-height: 500px;
+        display: block !important;
+    }
+
+    .product-results.dropdown-mode {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        box-shadow: var(--shadow-md);
+        margin-top: -1px;
+    }
+
+    .product-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--gray-100);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .product-item:hover {
+        background-color: var(--gray-50);
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .product-item:last-child {
+        border-bottom: none;
+    }
+
+    .product-item.selected {
+        background-color: #e7f1ff;
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .product-item.selected:hover {
+        background-color: #dbeafe;
+    }
+
+    .product-image {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        background: var(--gray-100);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-400);
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .product-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .product-name {
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .product-meta {
+        font-size: 12px;
+        color: var(--gray-500);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+        flex-wrap: wrap;
+    }
+
+    .product-price {
+        font-weight: 600;
+        color: var(--success-color);
+    }
+
+    .product-stock {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .stock-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .stock-high { background-color: var(--success-color); }
+    .stock-medium { background-color: var(--warning-color); }
+    .stock-low { background-color: var(--danger-color); }
+
+    .selected-products-display {
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 16px;
+    }
+
+    .selected-products-title {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--gray-700);
+    }
+
+    .selected-products-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .selected-product-tag {
+        background: var(--white);
+        border: 1px solid var(--primary-color);
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary-color);
+    }
+
+    .selected-product-name {
+        font-weight: 500;
+    }
+
+    .selected-product-price {
+        color: var(--gray-500);
+        font-size: 11px;
+    }
+
+    .remove-product {
+        background: transparent;
+        border: none;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .remove-product:hover {
+        background: var(--danger-color);
+        color: var(--white);
+    }
+
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: var(--gray-500);
+        font-size: 14px;
+    }
+
+    .product-selector-help {
+        margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .product-item {
+            padding: 10px 12px;
+            gap: 10px;
+        }
+
+        .product-image {
+            width: 35px;
+            height: 35px;
+        }
+
+        .product-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+
+        .selected-products-list {
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .selected-product-tag {
+            justify-content: space-between;
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('productSearch');
+        const resultsContainer = document.getElementById('productResults');
+        const selectedDisplay = document.getElementById('selectedProductsDisplay');
+        const selectedList = document.getElementById('selectedProductsList');
+        const originalSelect = document.querySelector('select[multiple]');
+
+        let selectedProducts = new Set();
+        let allProducts = [];
+
+        // Extract products from the original select options
+        function initializeProducts() {
+            const options = originalSelect.querySelectorAll('option');
+            allProducts = Array.from(options).map(option => ({
+                id: option.value,
+                name: option.textContent.split(' - $')[0],
+                price: parseFloat(option.dataset.price || '0'),
+                stock: parseInt(option.dataset.stock || '0'),
+                category: option.dataset.category || 'No Category',
+                image: option.dataset.image || 'default.jpg',
+                element: option
+            })).filter(product => product.id); // Remove empty options
+        }
+
+        function getStockIndicator(stock) {
+            if (stock > 10) return '<span class="stock-indicator stock-high"></span>High';
+            if (stock > 0) return '<span class="stock-indicator stock-medium"></span>Low';
+            return '<span class="stock-indicator stock-low"></span>Out';
+        }
+
+        function renderResults(products) {
+            if (products.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results"><i class="fas fa-search me-2"></i>No products found</div>';
+                return;
+            }
+
+            resultsContainer.innerHTML = products.map(product => `
+            <div class="product-item ${selectedProducts.has(product.id) ? 'selected' : ''}"
+                 data-product-id="${product.id}">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="product-details">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-meta">
+                        <span class="product-price">$${product.price.toFixed(2)}</span>
+                        <span>•</span>
+                        <span>${product.category}</span>
+                        <span>•</span>
+                        <span class="product-stock">${getStockIndicator(product.stock)}</span>
+                        ${selectedProducts.has(product.id) ? '<span>• <i class="fas fa-check text-success"></i> Selected</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        }
+
+        function renderSelectedProducts() {
+            if (selectedProducts.size === 0) {
+                selectedDisplay.style.display = 'none';
+                return;
+            }
+
+            selectedDisplay.style.display = 'block';
+            const selectedProductsArray = Array.from(selectedProducts).map(id =>
+                allProducts.find(p => p.id === id)
+            ).filter(Boolean);
+
+            selectedList.innerHTML = selectedProductsArray.map(product => `
+            <div class="selected-product-tag">
+                <div>
+                    <span class="selected-product-name">${product.name}</span>
+                    <div class="selected-product-price">$${product.price.toFixed(2)}</div>
+                </div>
+                <button type="button" class="remove-product" data-product-id="${product.id}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+        }
+
+        function toggleProduct(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            if (selectedProducts.has(productId)) {
+                selectedProducts.delete(productId);
+                product.element.selected = false;
+            } else {
+                selectedProducts.add(productId);
+                product.element.selected = true;
+            }
+
+            renderSelectedProducts();
+
+            // Update the current results display
+            const currentQuery = searchInput.value.toLowerCase();
+            const productsToShow = currentQuery ?
+                allProducts.filter(product =>
+                    product.name.toLowerCase().includes(currentQuery) ||
+                    product.category.toLowerCase().includes(currentQuery)
+                ) : allProducts;
+
+            renderResults(productsToShow);
+        }
+
+        // Initialize
+        initializeProducts();
+
+        // Show all products initially
+        renderResults(allProducts);
+        resultsContainer.classList.add('show-all');
+
+        // Search functionality
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+
+            if (query.length === 0) {
+                // Show all products when search is empty
+                renderResults(allProducts);
+                resultsContainer.classList.remove('dropdown-mode');
+                resultsContainer.classList.add('show-all');
+                return;
+            }
+
+            // Switch to dropdown mode when searching
+            resultsContainer.classList.remove('show-all');
+            resultsContainer.classList.add('dropdown-mode');
+
+            const filtered = allProducts.filter(product =>
+                product.name.toLowerCase().includes(query) ||
+                product.category.toLowerCase().includes(query)
+            );
+
+            renderResults(filtered);
+        });
+
+        // Handle clicks on search results
+        resultsContainer.addEventListener('click', function(e) {
+            const productItem = e.target.closest('.product-item');
+            if (productItem) {
+                const productId = productItem.dataset.productId;
+                toggleProduct(productId);
+            }
+        });
+
+        // Handle remove buttons in selected products
+        selectedList.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-product')) {
+                const productId = e.target.closest('.remove-product').dataset.productId;
+                toggleProduct(productId);
+            }
+        });
+
+        // Hide results when clicking outside (only in dropdown mode)
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.product-selector-container') &&
+                resultsContainer.classList.contains('dropdown-mode')) {
+                resultsContainer.classList.remove('dropdown-mode');
+                resultsContainer.classList.add('show-all');
+                searchInput.value = '';
+                renderResults(allProducts);
+            }
+        });
+
+        // Handle search input focus
+        searchInput.addEventListener('focus', function() {
+            if (this.value.trim().length > 0) {
+                resultsContainer.classList.remove('show-all');
+                resultsContainer.classList.add('dropdown-mode');
+            }
+        });
+    });
+</script>

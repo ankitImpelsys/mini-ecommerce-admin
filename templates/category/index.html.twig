@@ -3,35 +3,75 @@
 {% block title %}Categories{% endblock %}
 
 {% block body %}
-    <h2 class="mb-4">Category List</h2>
+    <div class="content-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Categories</h2>
+            <a href="{{ path('app_category_new') }}" class="btn-modern btn-success">
+                <i class="fas fa-plus"></i>
+                Create New Category
+            </a>
+        </div>
+    </div>
 
-    <a href="{{ path('app_category_new') }}" class="btn btn-success mb-3">➕ Create New</a>
-
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-        <tr>
-            <th class="text-center">ID</th>
-            <th class="text-center">Name</th>
-            <th class="text-center">Description</th>
-            <th class="text-center">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for category in categories %}
-            <tr>
-                <td class="text-center">{{ category.id }}</td>
-                <td class="text-center">{{ category.name }}</td>
-                <td class="text-center">{{ category.description }}</td>
-                <td class="text-center">
-                    <a href="{{ path('app_category_show', {'id': category.id}) }}" class="btn btn-sm btn-info">Show</a>
-                    <a href="{{ path('app_category_edit', {'id': category.id}) }}" class="btn btn-sm btn-warning">Edit</a>
-                </td>
-            </tr>
+    <div class="content-body">
+        {% if categories|length > 0 %}
+            <div class="table-container">
+                <table class="modern-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th style="width: 200px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for category in categories %}
+                        <tr>
+                            <td>
+                                <span class="text-muted">#{{ category.id }}</span>
+                            </td>
+                            <td>
+                                <div class="fw-medium">{{ category.name }}</div>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 300px;" title="{{ category.description }}">
+                                    {{ category.description|length > 50 ? category.description|slice(0, 50) ~ '...' : category.description }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ path('app_category_show', {'id': category.id}) }}"
+                                       class="btn-modern btn-primary btn-sm"
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                        View
+                                    </a>
+                                    <a href="{{ path('app_category_edit', {'id': category.id}) }}"
+                                       class="btn-modern btn-warning btn-sm"
+                                       title="Edit Category">
+                                        <i class="fas fa-edit"></i>
+                                        Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <tr>
-                <td colspan="4" class="text-center text-muted">No records found.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h3>No Categories Found</h3>
+                <p class="text-muted">Get started by creating your first category.</p>
+                <a href="{{ path('app_category_new') }}" class="btn-modern btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create First Category
+                </a>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

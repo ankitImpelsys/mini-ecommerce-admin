@@ -3,10 +3,15 @@
 {% block title %}Edit Order{% endblock %}
 
 {% block body %}
-    <h2>Edit Order</h2>
+    <div class="content-header mb-4">
+        <h2>Edit Order #{{ order.id }}</h2>
+    </div>
 
-    {{ include('order/_form.html.twig', {'button_label': 'Update'}) }}
+    <div class="card p-4 shadow-sm">
+        {{ include('order/_form.html.twig', {'button_label': 'Update'}) }}
+    </div>
 
-    <a href="{{ path('app_order_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
-    
+    <a href="{{ path('app_order_index') }}" class="btn-modern btn-secondary mt-3">
+        ← Back to list
+    </a>
 {% endblock %}

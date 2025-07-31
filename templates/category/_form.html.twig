@@ -1,17 +1,30 @@
-{{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+{{ form_start(form, {'attr': {'class': 'modern-form'}}) }}
 
-<div class="mb-3">
+<div class="form-group">
     {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
-    {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
-    {{ form_errors(form.name) }}
+    {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Enter category name'}}) }}
+    {% if form_errors(form.name) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.name) }}
+        </div>
+    {% endif %}
 </div>
 
-<div class="mb-3">
+<div class="form-group">
     {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
-    {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
-    {{ form_errors(form.description) }}
+    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Enter category description', 'rows': 4}}) }}
+    {% if form_errors(form.description) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.description) }}
+        </div>
+    {% endif %}
 </div>
 
-<button type="submit" class="btn btn-primary">{{ button_label|default('Save') }}</button>
+<div class="form-actions">
+    <button type="submit" class="btn-modern btn-primary">
+        <i class="fas fa-save"></i>
+        {{ button_label|default('Save') }}
+    </button>
+</div>
 
 {{ form_end(form) }}

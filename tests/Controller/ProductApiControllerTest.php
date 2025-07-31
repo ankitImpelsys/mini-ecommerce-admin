@@ -5,118 +5,104 @@ namespace App\Tests\Controller;
 use App\Entity\Category;
 use App\Entity\Product;
 use App\Entity\User;
-use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
 class ProductApiControllerTest extends WebTestCase
 {
-    public function testIndexReturnsUserProducts(): void
+    private $client;
+    private $em;
+
+    protected function setUp(): void
     {
-        $client = static::createClient();
-        $container = self::getContainer();
+        $this->client = static::createClient();
+        $this->em = static::getContainer()->get(EntityManagerInterface::class);
+    }
 
-        $entityManager = $container->get(EntityManagerInterface::class);
-
-        // Simulate a user with ROLE_ADMIN
+    private function createUser(string $emailPrefix = 'admin'): User
+    {
         $user = new User();
+        $user->setEmail($emailPrefix . '_' . uniqid() . '@example.com');
+        $user->setPassword('$2y$13$examplehashedpasswordstring...'); // dummy hashed password
         $user->setRoles(['ROLE_ADMIN']);
-        $user->setEmail('admin_' . uniqid() . '@example.com');
-        $user->setPassword('$2y$13$examplehashedpasswordstring...'); // hashed dummy password
 
-        $entityManager->persist($user);
-        $entityManager->flush();
+        $this->em->persist($user);
+        $this->em->flush();
 
-        // Login the user
-        $client->loginUser($user);
+        return $user;
+    }
 
-        // Create a product for this user
+    private function createCategory(string $name = 'Default Category'): Category
+    {
+        $category = new Category();
+        $category->setName($name);
+
+        $this->em->persist($category);
+        $this->em->flush();
+
+        return $category;
+    }
+
+    private function createProduct(User $user, Category $category = null, string $name = 'Test Product'): Product
+    {
         $product = new Product();
-        $product->setName('Test Product');
+        $product->setName($name);
         $product->setPrice(100);
         $product->setStock(10);
         $product->setUser($user);
         $product->setIsDeleted(false);
 
-        $entityManager->persist($product);
-        $entityManager->flush();
+        if ($category) {
+            $product->setCategory($category);
+        }
 
-        // Call the endpoint
-        $client->request('GET', '/api/products');
+        $this->em->persist($product);
+        $this->em->flush();
+
+        return $product;
+    }
+
+    public function testIndexReturnsUserProducts(): void
+    {
+        $user = $this->createUser();
+        $this->client->loginUser($user);
+        $this->createProduct($user);
+
+        $this->client->request('GET', '/api/products');
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-        $this->assertStringContainsString('Test Product', $client->getResponse()->getContent());
+        $this->assertStringContainsString('Test Product', $this->client->getResponse()->getContent());
     }
 
     public function testShowReturnsProductForAuthorizedUser(): void
     {
-        $client = static::createClient();
-        $container = self::getContainer();
+        $user = $this->createUser();
+        $this->client->loginUser($user);
+        $product = $this->createProduct($user);
 
-        $entityManager = $container->get(EntityManagerInterface::class);
-
-        // Create and persist user
-        $user = new User();
-        $user->setEmail('admin_' . uniqid() . '@example.com');
-
-        $user->setRoles(['ROLE_ADMIN']);
-        $user->setPassword('$2y$13$examplehashedpasswordstring...');
-
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        $client->loginUser($user);
-
-        // Create and persist product
-        $product = new Product();
-        $product->setName('Test Product');
-        $product->setPrice(99.99);
-        $product->setStock(10);
-        $product->setUser($user);
-        $product->setIsDeleted(false);
-
-        $entityManager->persist($product);
-        $entityManager->flush();
-
-        $client->request('GET', '/api/products/' . $product->getId());
+        $this->client->request('GET', '/api/products/' . $product->getId());
 
         $this->assertResponseIsSuccessful();
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-        $this->assertStringContainsString('Test Product', $client->getResponse()->getContent());
+        $this->assertStringContainsString('Test Product', $this->client->getResponse()->getContent());
     }
 
     public function testCreateProductForAuthorizedUser(): void
     {
-        $client = static::createClient();
-        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $user = $this->createUser();
+        $this->client->loginUser($user);
+        $category = $this->createCategory();
 
-        // Create a unique user
-        $user = new User();
-        $user->setEmail('admin_' . uniqid() . '@example.com');
-        $user->setPassword('$2y$13$examplehashedpasswordstring...');
-        $user->setRoles(['ROLE_ADMIN']);
-
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        // Login the user
-        $client->loginUser($user);
-
-        // Make sure a category with ID 1 exists (or adjust this)
-        $categoryId = 1;
-
-        // Create product data
         $postData = [
             'name' => 'New Product',
             'price' => 149.99,
             'stock' => 20,
-            'categoryId' => $categoryId,
+            'categoryId' => $category->getId(),
         ];
 
-        // Send POST request
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/products',
             [],
@@ -125,38 +111,21 @@ class ProductApiControllerTest extends WebTestCase
             json_encode($postData)
         );
 
-        $response = $client->getResponse();
+        $response = $this->client->getResponse();
         $this->assertEquals(Response::HTTP_CREATED, $response->getStatusCode());
 
         $json = json_decode($response->getContent(), true);
-        $this->assertArrayHasKey('data', $json);
         $this->assertEquals('Product created!', $json['data']['status']);
         $this->assertArrayHasKey('id', $json['data']);
     }
 
     public function testCreateProductWithNegativePrice(): void
     {
-        $client = static::createClient();
-        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $user = $this->createUser('invalid');
+        $this->client->loginUser($user);
+        $category = $this->createCategory('Invalid Category');
 
-        // Create and persist a user
-        $user = new User();
-        $user->setEmail('invalid_' . uniqid() . '@example.com');
-        $user->setPassword('$2y$13$examplehashedpasswordstring...');
-        $user->setRoles(['ROLE_ADMIN']);
-        $entityManager->persist($user);
-
-        // Create and persist a category
-        $category = new Category();
-        $category->setName('Invalid Category');
-        $entityManager->persist($category);
-
-        $entityManager->flush();
-
-        $client->loginUser($user);
-
-        // Send POST request with negative price
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/products',
             [],
@@ -170,37 +139,17 @@ class ProductApiControllerTest extends WebTestCase
             ])
         );
 
-        $response = $client->getResponse();
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
-
-        $json = json_decode($response->getContent(), true);
-        $this->assertStringContainsString('price', json_encode($json));
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('price', $this->client->getResponse()->getContent());
     }
 
     public function testCreateProductWithNegativeStock(): void
     {
-        $client = static::createClient();
-        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $user = $this->createUser('stock');
+        $this->client->loginUser($user);
+        $category = $this->createCategory('Stock Test Category');
 
-        // Create and persist a user
-        $user = new User();
-        $user->setEmail('stock_' . uniqid() . '@example.com');
-        $user->setPassword('$2y$13$examplehashedpasswordstring...');
-        $user->setRoles(['ROLE_ADMIN']);
-        $entityManager->persist($user);
-
-        // Create and persist a category
-        $category = new Category();
-        $category->setName('Stock Test Category');
-        $entityManager->persist($category);
-
-        $entityManager->flush();
-        $category->setUser($user);
-
-        $client->loginUser($user);
-
-        // Send POST request with negative stock
-        $client->request(
+        $this->client->request(
             'POST',
             '/api/products',
             [],
@@ -210,52 +159,22 @@ class ProductApiControllerTest extends WebTestCase
                 'name' => 'Invalid Stock Product',
                 'price' => 100,
                 'stock' => -5,
-                'category_id' => $category->getId() // Note: match the key used in your controller
+                'categoryId' => $category->getId()
             ])
         );
 
-        $response = $client->getResponse();
-        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
-
-        $json = json_decode($response->getContent(), true);
-        $this->assertStringContainsString('stock', json_encode($json));
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
+        $this->assertStringContainsString('stock', $this->client->getResponse()->getContent());
     }
-
-
 
     public function testUpdateProductForAuthorizedUser(): void
     {
-        $client = static::createClient();
-        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $user = $this->createUser();
+        $category = $this->createCategory('Update Category');
+        $product = $this->createProduct($user, $category, 'Old Product');
 
-        // Create a user
-        $user = new User();
-        $user->setEmail('admin_' . uniqid() . '@example.com');
-        $user->setPassword('$2y$13$examplehashedpasswordstring...');
-        $user->setRoles(['ROLE_ADMIN']);
-        $entityManager->persist($user);
+        $this->client->loginUser($user);
 
-        // Create a category (if required by product)
-        $category = new Category();
-        $category->setName('Test Category');
-        $entityManager->persist($category);
-
-        // Create a product
-        $product = new Product();
-        $product->setName('Old Product');
-        $product->setPrice(100);
-        $product->setStock(10);
-        $product->setUser($user);
-        $product->setCategory($category);
-        $product->setIsDeleted(false);
-        $entityManager->persist($product);
-
-        $entityManager->flush();
-
-        // Login user
-        $client->loginUser($user);
-
-        // Prepare updated data
         $updatedData = [
             'name' => 'Updated Product',
             'price' => 199.99,
@@ -263,8 +182,7 @@ class ProductApiControllerTest extends WebTestCase
             'categoryId' => $category->getId(),
         ];
 
-        // Send PUT request
-        $client->request(
+        $this->client->request(
             'PUT',
             '/api/products/' . $product->getId(),
             [],
@@ -273,58 +191,50 @@ class ProductApiControllerTest extends WebTestCase
             json_encode($updatedData)
         );
 
-        $response = $client->getResponse();
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-
-        $json = json_decode($response->getContent(), true);
-        $this->assertEquals('Product updated!', $json['data']['status']);
+        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $this->assertEquals('Product updated!', json_decode($this->client->getResponse()->getContent(), true)['data']['status']);
     }
 
     public function testDeleteProductForAuthorizedUser(): void
     {
-        $client = static::createClient();
-        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $user = $this->createUser('delete');
+        $category = $this->createCategory('Delete Category');
+        $product = $this->createProduct($user, $category, 'Product To Delete');
 
-        // Create user
-        $user = new User();
-        $user->setEmail('delete_' . uniqid() . '@example.com');
-        $user->setPassword('$2y$13$examplehashedpasswordstring...');
-        $user->setRoles(['ROLE_ADMIN']);
-        $entityManager->persist($user);
+        $this->client->loginUser($user);
 
-        // Create category (if needed)
-        $category = new Category();
-        $category->setName('Delete Category');
-        $entityManager->persist($category);
+        $this->client->request('DELETE', '/api/products/' . $product->getId());
 
-        // Create product
-        $product = new Product();
-        $product->setName('Product To Delete');
-        $product->setPrice(50);
-        $product->setStock(5);
-        $product->setUser($user);
-        $product->setCategory($category);
-        $product->setIsDeleted(false);
-        $entityManager->persist($product);
-
-        $entityManager->flush();
-
-        // Login the user
-        $client->loginUser($user);
-
-        // Send DELETE request
-        $client->request(
-            'DELETE',
-            '/api/products/' . $product->getId()
-        );
-
-        $response = $client->getResponse();
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-
-        $json = json_decode($response->getContent(), true);
-        $this->assertEquals('Product deleted', $json['data']['status']);
+        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $this->assertEquals('Product deleted', json_decode($this->client->getResponse()->getContent(), true)['data']['status']);
     }
 
+    public function testUserCannotEditProductCreatedByAnotherUser(): void
+    {
+        // User A creates a product
+        $owner = $this->createUser('owner');
+        $category = $this->createCategory();
+        $product = $this->createProduct($owner, $category, 'Owner Product');
 
+        // User B logs in and tries to edit User A's product
+        $intruder = $this->createUser('intruder');
+        $this->client->loginUser($intruder);
+
+        $this->client->request(
+            'PUT',
+            '/api/products/' . $product->getId(),
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'name' => 'Hacked Name',
+                'price' => 99.99,
+                'stock' => 50,
+                'categoryId' => $category->getId()
+            ])
+        );
+
+        $this->assertResponseStatusCodeSame(403);
+    }
 
 }
