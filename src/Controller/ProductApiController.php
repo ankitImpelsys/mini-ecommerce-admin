@@ -80,7 +80,7 @@ class ProductApiController extends AbstractController
             $product->setCategory($category);
         }
 
-        // ✅ Validate the Product entity before saving
+        // Validate the Product entity before saving
         $errors = $validator->validate($product);
         if (count($errors) > 0) {
             $errorMessages = [];
@@ -168,7 +168,7 @@ class ProductApiController extends AbstractController
         return $this->json(new ApiResponseDTO(['status' => 'Product deleted']));
     }
 
-    // ✅ PROTECTED UTILITY METHODS
+    //PROTECTED UTILITY METHODS
 
     protected function isOwnedByCurrentUser($entity): bool
     {
