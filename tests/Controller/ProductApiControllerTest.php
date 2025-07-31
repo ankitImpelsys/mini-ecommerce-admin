@@ -134,6 +134,50 @@ class ProductApiControllerTest extends WebTestCase
         $this->assertArrayHasKey('id', $json['data']);
     }
 
+    public function testCreateProductWithNegativePrice(): void
+    {
+        $client = static::createClient();
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+
+        // Create and persist a user
+        $user = new User();
+        $user->setEmail('invalid_' . uniqid() . '@example.com');
+        $user->setPassword('$2y$13$examplehashedpasswordstring...');
+        $user->setRoles(['ROLE_ADMIN']);
+        $entityManager->persist($user);
+
+        // Create and persist a category
+        $category = new Category();
+        $category->setName('Invalid Category');
+        $entityManager->persist($category);
+
+        $entityManager->flush();
+
+        $client->loginUser($user);
+
+        // Send POST request with negative price
+        $client->request(
+            'POST',
+            '/api/products',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'name' => 'Invalid Product',
+                'price' => -100,
+                'stock' => 10,
+                'categoryId' => $category->getId()
+            ])
+        );
+
+        $response = $client->getResponse();
+        $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+        $this->assertStringContainsString('price', json_encode($json));
+    }
+
+
     public function testUpdateProductForAuthorizedUser(): void
     {
         $client = static::createClient();
