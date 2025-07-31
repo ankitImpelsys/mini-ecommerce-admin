@@ -152,7 +152,7 @@ final class ProductController extends AbstractController
         if ($this->isCsrfTokenValid('delete' . $product->getId(), $request->request->get('_token'))) {
             $product->setIsDeleted(true);
             $em->flush();
-            $this->addFlash('success', 'Product soft-deleted successfully.');
+            $this->addFlash('success', 'Product deleted successfully.');
         }
 
         return $this->redirectToRoute('app_product_index');

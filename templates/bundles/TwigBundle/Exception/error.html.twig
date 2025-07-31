@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ status_code }} - {{ status_text }}{% endblock %}
+
+{% block body %}
+    <div style="text-align: center; margin-top: 5rem;">
+        <h1>{{ status_code }} 🚨 {{ status_text|default('Oops! Something went wrong.') }}</h1>
+        <p>
+            {% if exception is defined and exception.message %}
+                {{ exception.message }}
+            {% else %}
+                We're sorry, but the server encountered an error.
+            {% endif %}
+        </p>
+
+        <a href="{{ path('app_home') }}" class="btn btn-primary">Go back to Home</a>
+    </div>
+{% endblock %}
