@@ -48,7 +48,7 @@ final class ProductController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
+            $this->addFlash('form_error', 'There was an error in your submission. Please check the fields.');
         }
 
 

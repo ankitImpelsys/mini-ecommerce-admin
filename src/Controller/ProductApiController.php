@@ -52,7 +52,7 @@ class ProductApiController extends AbstractController
         return $this->json(new ApiResponseDTO(new ProductDTO($product)));
     }
 
-        
+
     #[Route('', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function create(

@@ -1,21 +1,41 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ 'Edit Product' }}{% endblock %}
+{% block title %}Edit Product{% endblock %}
 
 {% block body %}
-    <div class="container py-4">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb bg-light p-2 rounded mb-4">
-                <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ path('app_product_index') }}">Products</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ 'update' }}</li>
-            </ol>
+    <div class="content-header">
+        <h2>Edit Product</h2>
+        <nav class="breadcrumb-nav">
+            <a href="{{ path('admin_dashboard') }}" class="breadcrumb-link">Dashboard</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('app_product_index') }}" class="breadcrumb-link">Products</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('app_product_show', {'id': product.id}) }}" class="breadcrumb-link">{{ product.name }}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">Edit</span>
         </nav>
+    </div>
 
-        <h2 class="mb-4">{{ 'Edit Product'}}</h2>
-
-        {{ include('product/_form.html.twig', { button_label: button_label|default('Save') }) }}
-
-        <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to Products</a>
+    <div class="content-body">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="form-container">
+                    {{ include('product/_form.html.twig', {'button_label': 'Update Product'}) }}
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="preview-card">
+                    <h4>Current Image</h4>
+                    {% if product.imageFilename %}
+                        <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}" class="current-image">
+                    {% else %}
+                        <div class="no-image-preview">
+                            <i class="fas fa-image"></i>
+                            <p class="text-muted">No image uploaded</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

@@ -1,21 +1,22 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ 'Add Product' }}{% endblock %}
+{% block title %}Add Product{% endblock %}
 
 {% block body %}
-    <div class="container py-4">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb bg-light p-2 rounded mb-4">
-                <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ path('app_product_index') }}">Products</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ 'Add' }}</li>
-            </ol>
+    <div class="content-header">
+        <h2>Add New Product</h2>
+        <nav class="breadcrumb-nav">
+            <a href="{{ path('admin_dashboard') }}" class="breadcrumb-link">Dashboard</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('app_product_index') }}" class="breadcrumb-link">Products</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">New</span>
         </nav>
+    </div>
 
-        <h2 class="mb-4">{{ 'Add Product' }}</h2>
-
-        {{ include('product/_form.html.twig', { button_label: button_label|default('Save') }) }}
-
-        <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to Products</a>
+    <div class="content-body">
+        <div class="form-container">
+            {{ include('product/_form.html.twig', {'button_label': 'Create Product'}) }}
+        </div>
     </div>
 {% endblock %}

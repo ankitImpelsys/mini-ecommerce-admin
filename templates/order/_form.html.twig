@@ -197,9 +197,9 @@
         border-radius: 50%;
     }
 
-    .stock-high { background-color: var(--success-color); }
-    .stock-medium { background-color: var(--warning-color); }
-    .stock-low { background-color: var(--danger-color); }
+    /*.stock-high { background-color: var(--success-color); }*/
+    /*.stock-medium { background-color: var(--warning-color); }*/
+    /*.stock-low { background-color: var(--danger-color); }*/
 
     .selected-products-display {
         background: var(--gray-50);
@@ -329,11 +329,7 @@
             })).filter(product => product.id); // Remove empty options
         }
 
-        function getStockIndicator(stock) {
-            if (stock > 10) return '<span class="stock-indicator stock-high"></span>High';
-            if (stock > 0) return '<span class="stock-indicator stock-medium"></span>Low';
-            return '<span class="stock-indicator stock-low"></span>Out';
-        }
+
 
         function renderResults(products) {
             if (products.length === 0) {
@@ -350,11 +346,11 @@
                 <div class="product-details">
                     <div class="product-name">${product.name}</div>
                     <div class="product-meta">
-                        <span class="product-price">$${product.price.toFixed(2)}</span>
+                        <span class="product-price">₹${product.price.toFixed(2)}</span>
                         <span>•</span>
                         <span>${product.category}</span>
                         <span>•</span>
-                        <span class="product-stock">${getStockIndicator(product.stock)}</span>
+                        <span class="product-stock">${product.stock}</span>
                         ${selectedProducts.has(product.id) ? '<span>• <i class="fas fa-check text-success"></i> Selected</span>' : ''}
                     </div>
                 </div>
