@@ -61,10 +61,22 @@ final class OrderController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_order_show', methods: ['GET'])]
-    public function show(Order $order): Response
+    public function show(Order $order, EntityManagerInterface $entityManager): Response
     {
+        // Eagerly load products with their categories to avoid lazy loading issues
+        $orderWithProducts = $entityManager
+            ->getRepository(Order::class)
+            ->createQueryBuilder('o')
+            ->leftJoin('o.products', 'p')
+            ->leftJoin('p.category', 'c')
+            ->addSelect('p', 'c')
+            ->where('o.id = :orderId')
+            ->setParameter('orderId', $order->getId())
+            ->getQuery()
+            ->getOneOrNullResult();
+
         return $this->render('order/show.html.twig', [
-            'order' => $order,
+            'order' => $orderWithProducts ?? $order,
         ]);
     }
 
@@ -103,7 +115,6 @@ final class OrderController extends AbstractController
                     return $this->redirectToRoute('order_new');
                 }
             }
-
 
             // Restore stock
             foreach ($order->getProducts() as $product) {

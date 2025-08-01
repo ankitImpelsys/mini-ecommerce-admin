@@ -32,6 +32,49 @@
             </tbody>
         </table>
 
+        <!-- Products Section -->
+        <div class="mt-4">
+            <h4>Products</h4>
+            {% set activeProducts = order.activeProducts %}
+            {% if activeProducts|length > 0 %}
+                <div class="table-container mt-3">
+                    <table class="modern-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product Name</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Category</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for product in activeProducts %}
+                            <tr>
+                                <td><span class="text-muted">#{{ product.id }}</span></td>
+                                <td><div class="fw-medium">{{ product.name }}</div></td>
+                                <td>{{ product.description ? product.description|slice(0, 50) ~ (product.description|length > 50 ? '...' : '') : 'N/A' }}</td>
+                                <td>₹{{ product.price|number_format(2) }}</td>
+                                <td>
+                                    <span class="badge {{ product.stock > 0 ? 'bg-success' : 'bg-danger' }}">
+                                        {{ product.stock }}
+                                    </span>
+                                </td>
+                                <td>{{ product.category ? product.category.name : 'N/A' }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    No products found for this order.
+                </div>
+            {% endif %}
+        </div>
+
         <div class="mt-4 d-flex gap-2">
             <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-modern btn-warning">
                 <i class="fas fa-edit"></i> Edit
