@@ -93,13 +93,13 @@ class ProductApiControllerTest extends WebTestCase
     {
         $user = $this->createUser();
         $this->client->loginUser($user);
-        $category = $this->createCategory();
+        $category = $this->createCategory('Valid Category', $user); // ✅ user assigned
 
         $postData = [
             'name' => 'New Product',
             'price' => 149.99,
             'stock' => 20,
-            'categoryId' => $category->getId(),
+            'category_id' => $category->getId(),
         ];
 
         $this->client->request(
@@ -252,7 +252,7 @@ class ProductApiControllerTest extends WebTestCase
                 'name' => 'Some Product',
                 'price' => 20.0,
                 'stock' => 5,
-                'categoryId' => 999999, // invalid category ID
+                'category_id' => 999999, // invalid category ID
             ])
         );
 

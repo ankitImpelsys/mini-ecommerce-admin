@@ -63,17 +63,21 @@ class ProductApiController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if ($data === null) {
-            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), Response::HTTP_BAD_REQUEST);
+            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if (!isset($data['name'], $data['price'], $data['stock'], $data['category_id'])) {
-            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock, category_id']), Response::HTTP_BAD_REQUEST);
+            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock, category_id']), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $category = $categoryRepo->find($data['category_id']);
-        if (!$category || !$this->isOwnedByCurrentUser($category)) {
-            return $this->unauthorizedResponse('Invalid or unauthorized category');
+        if (!$category) {
+            return $this->json(new ApiResponseDTO(['error' => 'Category not found']), Response::HTTP_NOT_FOUND);
         }
+        if (!$this->isOwnedByCurrentUser($category)) {
+            return $this->unauthorizedResponse('Unauthorized category');
+        }
+
 
         $product = new Product();
         $product->setName($data['name']);
@@ -120,11 +124,11 @@ class ProductApiController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if ($data === null) {
-            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), 422);
         }
 
         if (!isset($data['name'], $data['price'], $data['stock'])) {
-            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), 422);
         }
 
         $product->setName($data['name']);
