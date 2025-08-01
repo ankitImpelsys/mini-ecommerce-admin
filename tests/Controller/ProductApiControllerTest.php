@@ -252,11 +252,11 @@ class ProductApiControllerTest extends WebTestCase
                 'name' => 'Some Product',
                 'price' => 20.0,
                 'stock' => 5,
-                'category_id' => 999999, // invalid category ID
+                'category_id' => 999999, 
             ])
         );
 
-        $this->assertResponseStatusCodeSame(404); // or 400 depending on how you handle this
+        $this->assertResponseStatusCodeSame(404);
     }
 
 
