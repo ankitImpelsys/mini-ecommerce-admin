@@ -237,4 +237,27 @@ class ProductApiControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(403);
     }
 
+    public function testUserCannotCreateProductWithInvalidCategory(): void
+    {
+        $user = $this->createUser('user');
+        $this->client->loginUser($user);
+
+        $this->client->request(
+            'POST',
+            '/api/products',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'name' => 'Some Product',
+                'price' => 20.0,
+                'stock' => 5,
+                'categoryId' => 999999, // invalid category ID
+            ])
+        );
+
+        $this->assertResponseStatusCodeSame(404); // or 400 depending on how you handle this
+    }
+
+
 }

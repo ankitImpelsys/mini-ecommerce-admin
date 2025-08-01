@@ -64,6 +64,15 @@ class ProductApiController extends AbstractController
             return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), Response::HTTP_BAD_REQUEST);
         }
 
+        $category = $categoryRepo->find($data['categoryId']);
+
+        if (!$category) {
+            return $this->json(
+                new ApiResponseDTO(null, 'Invalid category ID', 404),
+                404
+            );
+        }
+
         $product = new Product();
         $product->setName($data['name']);
         $product->setDescription($data['description'] ?? null);
