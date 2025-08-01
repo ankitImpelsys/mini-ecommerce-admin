@@ -252,7 +252,7 @@ class ProductApiControllerTest extends WebTestCase
                 'name' => 'Some Product',
                 'price' => 20.0,
                 'stock' => 5,
-                'category_id' => 999999, 
+                'category_id' => 999999,
             ])
         );
 
