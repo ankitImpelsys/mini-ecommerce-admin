@@ -34,22 +34,65 @@ final class OrderController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Get product quantities from the form
+            $productQuantities = $request->request->all('product_quantities') ?? [];
 
+            // Set default quantity of 1 for products without specified quantities
+            foreach ($order->getProducts() as $product) {
+                if (!isset($productQuantities[$product->getId()])) {
+                    $productQuantities[$product->getId()] = 1;
+                }
+            }
+
+            // Validate stock availability
+            $stockErrors = [];
+            foreach ($order->getProducts() as $product) {
+                $productId = $product->getId();
+                $requestedQuantity = (int)$productQuantities[$productId];
+
+                if ($product->getStock() < $requestedQuantity) {
+                    $stockErrors[] = sprintf(
+                        'Not enough stock for %s. Available: %d, Requested: %d',
+                        $product->getName(),
+                        $product->getStock(),
+                        $requestedQuantity
+                    );
+                }
+            }
+
+            if (!empty($stockErrors)) {
+                foreach ($stockErrors as $error) {
+                    $this->addFlash('error', $error);
+                }
+
+                return $this->render('order/new.html.twig', [
+                    'order' => $order,
+                    'form' => $form,
+                ]);
+            }
+
+            // Set order properties
             $order->setUser($this->getUser());
-
             $order->setCreatedAt(new \DateTimeImmutable());
             $order->setStatus('Pending');
 
-            // Reduce stock for each product
+            // Update stock
             foreach ($order->getProducts() as $product) {
+                $productId = $product->getId();
+                $quantity = (int)$productQuantities[$productId];
                 $currentStock = $product->getStock();
-                $product->setStock($currentStock - 1);
+                $product->setStock($currentStock - $quantity);
             }
 
+            // Persist order
             $entityManager->persist($order);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Order created.');
+            // Store quantities in session for display purposes
+            $session = $request->getSession();
+            $session->set('order_quantities_' . $order->getId(), $productQuantities);
+
+            $this->addFlash('success', 'Order created successfully.');
 
             return $this->redirectToRoute('app_order_index');
         }
@@ -61,9 +104,9 @@ final class OrderController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_order_show', methods: ['GET'])]
-    public function show(Order $order, EntityManagerInterface $entityManager): Response
+    public function show(Order $order, EntityManagerInterface $entityManager, Request $request): Response
     {
-        // Eagerly load products with their categories to avoid lazy loading issues
+        // Eagerly load products with their categories
         $orderWithProducts = $entityManager
             ->getRepository(Order::class)
             ->createQueryBuilder('o')
@@ -75,14 +118,47 @@ final class OrderController extends AbstractController
             ->getQuery()
             ->getOneOrNullResult();
 
+        $order = $orderWithProducts ?? $order;
+
+        // Get stored quantities
+        $session = $request->getSession();
+        $quantities = $session->get('order_quantities_' . $order->getId(), []);
+
+        // Calculate order details
+        $orderItems = [];
+        $totalItems = 0;
+        $totalAmount = 0.0;
+
+        foreach ($order->getProducts() as $product) {
+            $quantity = $quantities[$product->getId()] ?? 1;
+            $subtotal = $product->getPrice() * $quantity;
+
+            $orderItems[] = [
+                'product' => $product,
+                'quantity' => $quantity,
+                'subtotal' => $subtotal
+            ];
+
+            $totalItems += $quantity;
+            $totalAmount += $subtotal;
+        }
+
         return $this->render('order/show.html.twig', [
-            'order' => $orderWithProducts ?? $order,
+            'order' => $order,
+            'order_items' => $orderItems,
+            'total_items' => $totalItems,
+            'total_amount' => $totalAmount,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_order_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Order $order, EntityManagerInterface $entityManager): Response
     {
+        // Get stored original quantities
+        $session = $request->getSession();
+        $originalQuantities = $session->get('order_quantities_' . $order->getId(), []);
+        $originalProducts = $order->getProducts()->toArray();
+
         $form = $this->createForm(OrderType::class, $order, [
             'current_user' => $this->getUser(),
         ]);
@@ -90,9 +166,73 @@ final class OrderController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Get new product quantities
+            $newQuantities = $request->request->all('product_quantities') ?? [];
+
+            // Set default quantity of 1 for products without specified quantities
+            foreach ($order->getProducts() as $product) {
+                if (!isset($newQuantities[$product->getId()])) {
+                    $newQuantities[$product->getId()] = 1;
+                }
+            }
+
+            // First, restore stock for originally ordered products
+            foreach ($originalProducts as $product) {
+                $productId = $product->getId();
+                $originalQuantity = $originalQuantities[$productId] ?? 1;
+                $currentStock = $product->getStock();
+                $product->setStock($currentStock + $originalQuantity);
+            }
+
+            // Validate stock availability for new quantities
+            $stockErrors = [];
+            foreach ($order->getProducts() as $product) {
+                $productId = $product->getId();
+                $requestedQuantity = (int)$newQuantities[$productId];
+
+                if ($product->getStock() < $requestedQuantity) {
+                    $stockErrors[] = sprintf(
+                        'Not enough stock for %s. Available: %d, Requested: %d',
+                        $product->getName(),
+                        $product->getStock(),
+                        $requestedQuantity
+                    );
+                }
+            }
+
+            if (!empty($stockErrors)) {
+                // Re-reduce stock for original products if validation fails
+                foreach ($originalProducts as $product) {
+                    $productId = $product->getId();
+                    $originalQuantity = $originalQuantities[$productId] ?? 1;
+                    $currentStock = $product->getStock();
+                    $product->setStock($currentStock - $originalQuantity);
+                }
+
+                foreach ($stockErrors as $error) {
+                    $this->addFlash('error', $error);
+                }
+
+                return $this->render('order/edit.html.twig', [
+                    'order' => $order,
+                    'form' => $form,
+                ]);
+            }
+
+            // Update stock with new quantities
+            foreach ($order->getProducts() as $product) {
+                $productId = $product->getId();
+                $quantity = (int)$newQuantities[$productId];
+                $currentStock = $product->getStock();
+                $product->setStock($currentStock - $quantity);
+            }
+
+            // Update stored quantities
+            $session->set('order_quantities_' . $order->getId(), $newQuantities);
+
             $entityManager->flush();
 
-            $this->addFlash('success', 'Order edited successfully.');
+            $this->addFlash('success', 'Order updated successfully.');
 
             return $this->redirectToRoute('app_order_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -108,22 +248,32 @@ final class OrderController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete'.$order->getId(), $request->getPayload()->getString('_token'))) {
 
-            // to prevent ordering out of stock items
+            // Check if products are still available
             foreach ($order->getProducts() as $product) {
-                if ($product->getStock() < 1) {
-                    $this->addFlash('error', 'Product '.$product->getName().' is out of stock!');
-                    return $this->redirectToRoute('order_new');
+                if ($product->isDeleted()) {
+                    $this->addFlash('error', 'Cannot delete order: Product '.$product->getName().' has been deleted from inventory.');
+                    return $this->redirectToRoute('app_order_index');
                 }
             }
 
-            // Restore stock
+            // Restore stock using stored quantities
+            $session = $request->getSession();
+            $quantities = $session->get('order_quantities_' . $order->getId(), []);
+
             foreach ($order->getProducts() as $product) {
+                $productId = $product->getId();
+                $quantity = $quantities[$productId] ?? 1;
                 $currentStock = $product->getStock();
-                $product->setStock($currentStock + 1);
+                $product->setStock($currentStock + $quantity);
             }
+
+            // Clear stored quantities
+            $session->remove('order_quantities_' . $order->getId());
 
             $entityManager->remove($order);
             $entityManager->flush();
+
+            $this->addFlash('success', 'Order deleted successfully.');
         }
 
         return $this->redirectToRoute('app_order_index', [], Response::HTTP_SEE_OTHER);

@@ -41,12 +41,25 @@
                 <i class="fas fa-shopping-cart me-2"></i>Selected Products
             </h6>
             <div id="selectedProductsList" class="selected-products-list"></div>
+            <div class="order-summary mt-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Total Items: <span id="totalItems">0</span></strong>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <strong>Total Amount: ₹<span id="totalAmount">0.00</span></strong>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Hidden Original Select (for form submission) -->
         <div style="display: none;">
             {{ form_widget(form.products) }}
         </div>
+
+        <!-- Hidden inputs for quantities -->
+        <div id="quantityInputs" style="display: none;"></div>
 
         <!-- Product Results/Grid -->
         <div id="productResults" class="product-results show-all"></div>
@@ -144,6 +157,16 @@
         background-color: #dbeafe;
     }
 
+    .product-item.out-of-stock {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .product-item.out-of-stock:hover {
+        background-color: transparent;
+        border-left: none;
+    }
+
     .product-image {
         width: 40px;
         height: 40px;
@@ -195,6 +218,15 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
+        background-color: var(--success-color);
+    }
+
+    .stock-indicator.low {
+        background-color: var(--warning-color);
+    }
+
+    .stock-indicator.out {
+        background-color: var(--danger-color);
     }
 
     .selected-products-display {
@@ -213,44 +245,101 @@
 
     .selected-products-list {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .selected-product-tag {
+    .selected-product-item {
         background: var(--white);
-        border: 1px solid var(--primary-color);
-        border-radius: 20px;
-        padding: 6px 12px;
-        font-size: 13px;
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        padding: 16px;
         display: flex;
         align-items: center;
-        gap: 8px;
-        color: var(--primary-color);
+        gap: 12px;
+    }
+
+    .selected-product-info {
+        flex: 1;
+        min-width: 0;
     }
 
     .selected-product-name {
-        font-weight: 500;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0;
+        font-size: 14px;
     }
 
     .selected-product-price {
-        color: var(--gray-500);
-        font-size: 11px;
+        color: var(--gray-600);
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--gray-300);
+        border-radius: 6px;
+        padding: 4px;
+        background: var(--white);
+    }
+
+    .quantity-btn {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .quantity-btn:hover:not(:disabled) {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .quantity-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .quantity-input {
+        width: 50px;
+        text-align: center;
+        border: none;
+        background: transparent;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--gray-900);
+    }
+
+    .quantity-input:focus {
+        outline: none;
     }
 
     .remove-product {
         background: transparent;
         border: none;
-        color: var(--primary-color);
+        color: var(--danger-color);
         cursor: pointer;
-        font-size: 14px;
+        font-size: 16px;
         line-height: 1;
-        padding: 0;
+        padding: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 16px;
-        height: 16px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         transition: all 0.2s ease;
     }
@@ -258,6 +347,12 @@
     .remove-product:hover {
         background: var(--danger-color);
         color: var(--white);
+    }
+
+    .order-summary {
+        border-top: 1px solid var(--gray-200);
+        padding-top: 12px;
+        font-size: 14px;
     }
 
     .no-results {
@@ -269,6 +364,15 @@
 
     .product-selector-help {
         margin-top: 8px;
+    }
+
+    .out-of-stock-badge {
+        background: var(--danger-color);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
     }
 
     @media (max-width: 768px) {
@@ -288,14 +392,14 @@
             gap: 4px;
         }
 
-        .selected-products-list {
+        .selected-product-item {
             flex-direction: column;
-            gap: 6px;
+            align-items: stretch;
+            gap: 12px;
         }
 
-        .selected-product-tag {
-            justify-content: space-between;
-            width: 100%;
+        .quantity-controls {
+            align-self: center;
         }
     }
 </style>
@@ -307,8 +411,11 @@
         const selectedDisplay = document.getElementById('selectedProductsDisplay');
         const selectedList = document.getElementById('selectedProductsList');
         const originalSelect = document.querySelector('select[multiple]');
+        const quantityInputsContainer = document.getElementById('quantityInputs');
+        const totalItemsSpan = document.getElementById('totalItems');
+        const totalAmountSpan = document.getElementById('totalAmount');
 
-        let selectedProducts = new Set();
+        let selectedProducts = new Map(); // productId -> {product, quantity}
         let allProducts = [];
 
         // Extract products from the original select options and preserve selected state
@@ -322,18 +429,31 @@
                 category: option.dataset.category || 'No Category',
                 image: option.dataset.image || 'default.jpg',
                 element: option,
-                selected: option.selected // Keep track of pre-selected state
-            })).filter(product => product.id); // Remove empty options
+                selected: option.selected
+            })).filter(product => product.id);
 
-            // Initialize selectedProducts Set with pre-selected items
+            // Initialize selectedProducts Map with pre-selected items (quantity 1)
             allProducts.forEach(product => {
                 if (product.selected) {
-                    selectedProducts.add(product.id);
+                    selectedProducts.set(product.id, {
+                        product: product,
+                        quantity: 1
+                    });
                 }
             });
 
             console.log('Initialized products:', allProducts);
-            console.log('Pre-selected products:', Array.from(selectedProducts));
+            console.log('Pre-selected products:', Array.from(selectedProducts.keys()));
+        }
+
+        function getAvailableStock(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return 0;
+
+            const selectedItem = selectedProducts.get(productId);
+            const usedQuantity = selectedItem ? selectedItem.quantity : 0;
+
+            return product.stock - usedQuantity;
         }
 
         function renderResults(products) {
@@ -342,25 +462,48 @@
                 return;
             }
 
-            resultsContainer.innerHTML = products.map(product => `
-            <div class="product-item ${selectedProducts.has(product.id) ? 'selected' : ''}"
-                 data-product-id="${product.id}">
-                <div class="product-image">
-                    <i class="fas fa-box"></i>
-                </div>
-                <div class="product-details">
-                    <div class="product-name">${product.name}</div>
-                    <div class="product-meta">
-                        <span class="product-price">₹${product.price.toFixed(2)}</span>
-                        <span>•</span>
-                        <span>${product.category}</span>
-                        <span>•</span>
-                        <span class="product-stock">${product.stock} in stock</span>
-                        ${selectedProducts.has(product.id) ? '<span>• <i class="fas fa-check text-success"></i> Selected</span>' : ''}
+            resultsContainer.innerHTML = products.map(product => {
+                const availableStock = getAvailableStock(product.id);
+                const isSelected = selectedProducts.has(product.id);
+                const isOutOfStock = availableStock <= 0 && !isSelected;
+
+                return `
+                <div class="product-item ${isSelected ? 'selected' : ''} ${isOutOfStock ? 'out-of-stock' : ''}"
+                     data-product-id="${product.id}">
+                    <div class="product-image">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="product-details">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-meta">
+                            <span class="product-price">₹${product.price.toFixed(2)}</span>
+                            <span>•</span>
+                            <span>${product.category}</span>
+                            <span>•</span>
+                            <span class="product-stock">
+                                <span class="stock-indicator ${availableStock <= 5 ? (availableStock === 0 ? 'out' : 'low') : ''}"></span>
+                                ${availableStock} available
+                            </span>
+                            ${isSelected ? `<span>• <i class="fas fa-check text-success"></i> Selected (${selectedProducts.get(product.id).quantity})</span>` : ''}
+                            ${isOutOfStock ? '<span class="out-of-stock-badge">Out of Stock</span>' : ''}
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+            }).join('');
+        }
+
+        function updateTotals() {
+            let totalItems = 0;
+            let totalAmount = 0;
+
+            selectedProducts.forEach(({product, quantity}) => {
+                totalItems += quantity;
+                totalAmount += product.price * quantity;
+            });
+
+            totalItemsSpan.textContent = totalItems;
+            totalAmountSpan.textContent = totalAmount.toFixed(2);
         }
 
         function renderSelectedProducts() {
@@ -370,55 +513,105 @@
             }
 
             selectedDisplay.style.display = 'block';
-            const selectedProductsArray = Array.from(selectedProducts).map(id =>
-                allProducts.find(p => p.id === id)
-            ).filter(Boolean);
 
-            selectedList.innerHTML = selectedProductsArray.map(product => `
-            <div class="selected-product-tag">
-                <div>
-                    <span class="selected-product-name">${product.name}</span>
-                    <div class="selected-product-price">₹${product.price.toFixed(2)}</div>
+            const selectedProductsArray = Array.from(selectedProducts.values());
+
+            selectedList.innerHTML = selectedProductsArray.map(({product, quantity}) => `
+                <div class="selected-product-item">
+                    <div class="selected-product-info">
+                        <div class="selected-product-name">${product.name}</div>
+                        <div class="selected-product-price">₹${product.price.toFixed(2)} each</div>
+                    </div>
+                    <div class="quantity-controls">
+                        <button type="button" class="quantity-btn decrease-btn" data-product-id="${product.id}" ${quantity <= 1 ? 'disabled' : ''}>
+                            −
+                        </button>
+                        <input type="number" class="quantity-input" value="${quantity}" min="1" max="${product.stock}" data-product-id="${product.id}" readonly>
+                        <button type="button" class="quantity-btn increase-btn" data-product-id="${product.id}" ${quantity >= product.stock ? 'disabled' : ''}>
+                            +
+                        </button>
+                    </div>
+                    <button type="button" class="remove-product" data-product-id="${product.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-                <button type="button" class="remove-product" data-product-id="${product.id}">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `).join('');
+            `).join('');
+
+            updateTotals();
         }
 
-        function toggleProduct(productId) {
-            const product = allProducts.find(p => p.id === productId);
-            if (!product) return;
+        function updateFormInputs() {
+            // Clear existing quantity inputs
+            quantityInputsContainer.innerHTML = '';
 
-            if (selectedProducts.has(productId)) {
-                selectedProducts.delete(productId);
-                product.element.selected = false;
-            } else {
-                selectedProducts.add(productId);
-                product.element.selected = true;
-            }
+            // Update original select
+            allProducts.forEach(product => {
+                product.element.selected = selectedProducts.has(product.id);
+            });
 
-            // Trigger change event on the original select to maintain form state
+            // Add hidden inputs for quantities
+            selectedProducts.forEach(({product, quantity}, productId) => {
+                const quantityInput = document.createElement('input');
+                quantityInput.type = 'hidden';
+                quantityInput.name = `product_quantities[${productId}]`;
+                quantityInput.value = quantity;
+                quantityInputsContainer.appendChild(quantityInput);
+            });
+
+            // Trigger change event
             originalSelect.dispatchEvent(new Event('change'));
+        }
 
+        function addProduct(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return false;
+
+            const availableStock = getAvailableStock(productId);
+            if (availableStock <= 0) return false;
+
+            selectedProducts.set(productId, {
+                product: product,
+                quantity: 1
+            });
+
+            updateFormInputs();
+            renderSelectedProducts();
+            return true;
+        }
+
+        function removeProduct(productId) {
+            selectedProducts.delete(productId);
+            updateFormInputs();
+            renderSelectedProducts();
+        }
+
+        function changeQuantity(productId, newQuantity) {
+            const selectedItem = selectedProducts.get(productId);
+            if (!selectedItem) return;
+
+            const product = selectedItem.product;
+            newQuantity = Math.max(1, Math.min(newQuantity, product.stock));
+
+            selectedProducts.set(productId, {
+                product: product,
+                quantity: newQuantity
+            });
+
+            updateFormInputs();
             renderSelectedProducts();
 
-            // Update the current results display
+            // Re-render results to update available quantities
             const currentQuery = searchInput.value.toLowerCase();
             const productsToShow = currentQuery ?
-                allProducts.filter(product =>
-                    product.name.toLowerCase().includes(currentQuery) ||
-                    product.category.toLowerCase().includes(currentQuery)
+                allProducts.filter(p =>
+                    p.name.toLowerCase().includes(currentQuery) ||
+                    p.category.toLowerCase().includes(currentQuery)
                 ) : allProducts;
-
             renderResults(productsToShow);
         }
 
         // Initialize
         initializeProducts();
-
-        // Show all products initially and render selected products
         renderResults(allProducts);
         renderSelectedProducts();
         resultsContainer.classList.add('show-all');
@@ -428,14 +621,12 @@
             const query = e.target.value.toLowerCase().trim();
 
             if (query.length === 0) {
-                // Show all products when search is empty
                 renderResults(allProducts);
                 resultsContainer.classList.remove('dropdown-mode');
                 resultsContainer.classList.add('show-all');
                 return;
             }
 
-            // Switch to dropdown mode when searching
             resultsContainer.classList.remove('show-all');
             resultsContainer.classList.add('dropdown-mode');
 
@@ -450,17 +641,48 @@
         // Handle clicks on search results
         resultsContainer.addEventListener('click', function(e) {
             const productItem = e.target.closest('.product-item');
-            if (productItem) {
+            if (productItem && !productItem.classList.contains('out-of-stock')) {
                 const productId = productItem.dataset.productId;
-                toggleProduct(productId);
+
+                if (selectedProducts.has(productId)) {
+                    removeProduct(productId);
+                } else {
+                    addProduct(productId);
+                }
+
+                // Re-render results to update stock display
+                const currentQuery = searchInput.value.toLowerCase();
+                const productsToShow = currentQuery ?
+                    allProducts.filter(p =>
+                        p.name.toLowerCase().includes(currentQuery) ||
+                        p.category.toLowerCase().includes(currentQuery)
+                    ) : allProducts;
+                renderResults(productsToShow);
             }
         });
 
-        // Handle remove buttons in selected products
+        // Handle quantity controls
         selectedList.addEventListener('click', function(e) {
+            const productId = e.target.closest('[data-product-id]')?.dataset.productId;
+            if (!productId) return;
+
             if (e.target.closest('.remove-product')) {
-                const productId = e.target.closest('.remove-product').dataset.productId;
-                toggleProduct(productId);
+                removeProduct(productId);
+
+                // Re-render results
+                const currentQuery = searchInput.value.toLowerCase();
+                const productsToShow = currentQuery ?
+                    allProducts.filter(p =>
+                        p.name.toLowerCase().includes(currentQuery) ||
+                        p.category.toLowerCase().includes(currentQuery)
+                    ) : allProducts;
+                renderResults(productsToShow);
+            } else if (e.target.closest('.increase-btn')) {
+                const currentQuantity = selectedProducts.get(productId).quantity;
+                changeQuantity(productId, currentQuantity + 1);
+            } else if (e.target.closest('.decrease-btn')) {
+                const currentQuantity = selectedProducts.get(productId).quantity;
+                changeQuantity(productId, currentQuantity - 1);
             }
         });
 
@@ -468,7 +690,7 @@
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.product-selector-container') &&
                 resultsContainer.classList.contains('dropdown-mode')) {
-                resultsContainer.classList.remove('show-all');
+                resultsContainer.classList.remove('dropdown-mode');
                 resultsContainer.classList.add('show-all');
                 searchInput.value = '';
                 renderResults(allProducts);
@@ -480,6 +702,23 @@
             if (this.value.trim().length > 0) {
                 resultsContainer.classList.remove('show-all');
                 resultsContainer.classList.add('dropdown-mode');
+            }
+        });
+
+        // Form submission validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            let hasOutOfStockItems = false;
+
+            selectedProducts.forEach(({product, quantity}, productId) => {
+                if (quantity > product.stock) {
+                    hasOutOfStockItems = true;
+                    alert(`Not enough stock for ${product.name}. Available: ${product.stock}, Requested: ${quantity}`);
+                }
+            });
+
+            if (hasOutOfStockItems) {
+                e.preventDefault();
+                return false;
             }
         });
     });
