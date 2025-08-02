@@ -197,10 +197,6 @@
         border-radius: 50%;
     }
 
-    /*.stock-high { background-color: var(--success-color); }*/
-    /*.stock-medium { background-color: var(--warning-color); }*/
-    /*.stock-low { background-color: var(--danger-color); }*/
-
     .selected-products-display {
         background: var(--gray-50);
         border: 1px solid var(--gray-200);
@@ -315,21 +311,30 @@
         let selectedProducts = new Set();
         let allProducts = [];
 
-        // Extract products from the original select options
+        // Extract products from the original select options and preserve selected state
         function initializeProducts() {
             const options = originalSelect.querySelectorAll('option');
             allProducts = Array.from(options).map(option => ({
                 id: option.value,
-                name: option.textContent.split(' - $')[0],
+                name: option.textContent.split(' - $')[0] || option.textContent.split(' - ₹')[0],
                 price: parseFloat(option.dataset.price || '0'),
                 stock: parseInt(option.dataset.stock || '0'),
                 category: option.dataset.category || 'No Category',
                 image: option.dataset.image || 'default.jpg',
-                element: option
+                element: option,
+                selected: option.selected // Keep track of pre-selected state
             })).filter(product => product.id); // Remove empty options
+
+            // Initialize selectedProducts Set with pre-selected items
+            allProducts.forEach(product => {
+                if (product.selected) {
+                    selectedProducts.add(product.id);
+                }
+            });
+
+            console.log('Initialized products:', allProducts);
+            console.log('Pre-selected products:', Array.from(selectedProducts));
         }
-
-
 
         function renderResults(products) {
             if (products.length === 0) {
@@ -350,7 +355,7 @@
                         <span>•</span>
                         <span>${product.category}</span>
                         <span>•</span>
-                        <span class="product-stock">${product.stock}</span>
+                        <span class="product-stock">${product.stock} in stock</span>
                         ${selectedProducts.has(product.id) ? '<span>• <i class="fas fa-check text-success"></i> Selected</span>' : ''}
                     </div>
                 </div>
@@ -373,7 +378,7 @@
             <div class="selected-product-tag">
                 <div>
                     <span class="selected-product-name">${product.name}</span>
-                    <div class="selected-product-price">$${product.price.toFixed(2)}</div>
+                    <div class="selected-product-price">₹${product.price.toFixed(2)}</div>
                 </div>
                 <button type="button" class="remove-product" data-product-id="${product.id}">
                     <i class="fas fa-times"></i>
@@ -394,6 +399,9 @@
                 product.element.selected = true;
             }
 
+            // Trigger change event on the original select to maintain form state
+            originalSelect.dispatchEvent(new Event('change'));
+
             renderSelectedProducts();
 
             // Update the current results display
@@ -410,8 +418,9 @@
         // Initialize
         initializeProducts();
 
-        // Show all products initially
+        // Show all products initially and render selected products
         renderResults(allProducts);
+        renderSelectedProducts();
         resultsContainer.classList.add('show-all');
 
         // Search functionality
@@ -459,7 +468,7 @@
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.product-selector-container') &&
                 resultsContainer.classList.contains('dropdown-mode')) {
-                resultsContainer.classList.remove('dropdown-mode');
+                resultsContainer.classList.remove('show-all');
                 resultsContainer.classList.add('show-all');
                 searchInput.value = '';
                 renderResults(allProducts);
