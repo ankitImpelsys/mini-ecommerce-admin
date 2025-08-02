@@ -20,6 +20,13 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/api/products')]
 class ProductApiController extends AbstractController
 {
+    protected EntityManagerInterface $entityManager;
+
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+
     #[Route('', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function index(ProductRepository $productRepository): JsonResponse
@@ -45,24 +52,32 @@ class ProductApiController extends AbstractController
         return $this->json(new ApiResponseDTO(new ProductDTO($product)));
     }
 
+
     #[Route('', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function create(
-        Request                $request,
-        EntityManagerInterface $entityManager,
-        CategoryRepository     $categoryRepo,
-        ValidatorInterface     $validator
-    ): JsonResponse
-    {
+        Request            $request,
+        CategoryRepository $categoryRepo,
+        ValidatorInterface $validator
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
         if ($data === null) {
-            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), Response::HTTP_BAD_REQUEST);
+            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        if (!isset($data['name'], $data['price'], $data['stock'])) {
-            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), Response::HTTP_BAD_REQUEST);
+        if (!isset($data['name'], $data['price'], $data['stock'], $data['category_id'])) {
+            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock, category_id']), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
+
+        $category = $categoryRepo->find($data['category_id']);
+        if (!$category) {
+            return $this->json(new ApiResponseDTO(['error' => 'Category not found']), Response::HTTP_NOT_FOUND);
+        }
+        if (!$this->isOwnedByCurrentUser($category)) {
+            return $this->unauthorizedResponse('Unauthorized category');
+        }
+
 
         $product = new Product();
         $product->setName($data['name']);
@@ -71,16 +86,8 @@ class ProductApiController extends AbstractController
         $product->setStock($data['stock']);
         $product->setIsDeleted(false);
         $product->setUser($this->getUser());
+        $product->setCategory($category);
 
-        if (isset($data['category_id'])) {
-            $category = $categoryRepo->find($data['category_id']);
-            if (!$category || !$this->isOwnedByCurrentUser($category)) {
-                return $this->unauthorizedResponse('Invalid or unauthorized category');
-            }
-            $product->setCategory($category);
-        }
-
-        // ✅ Validate the Product entity before saving
         $errors = $validator->validate($product);
         if (count($errors) > 0) {
             $errorMessages = [];
@@ -91,8 +98,8 @@ class ProductApiController extends AbstractController
             return $this->json(new ApiResponseDTO(['errors' => $errorMessages]), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $entityManager->persist($product);
-        $entityManager->flush();
+        $this->entityManager->persist($product);
+        $this->entityManager->flush();
 
         return $this->json(new ApiResponseDTO([
             'status' => 'Product created!',
@@ -104,11 +111,10 @@ class ProductApiController extends AbstractController
     #[Route('/{id}', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
     public function update(
-        Request                $request,
-        Product                $product,
-        EntityManagerInterface $entityManager,
-        CategoryRepository     $categoryRepo,
-        ValidatorInterface     $validator
+        Request            $request,
+        Product            $product,
+        CategoryRepository $categoryRepo,
+        ValidatorInterface $validator
     ): JsonResponse
     {
         if (!$this->isOwnedByCurrentUser($product) || $product->isDeleted()) {
@@ -118,11 +124,11 @@ class ProductApiController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if ($data === null) {
-            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), 422);
         }
 
         if (!isset($data['name'], $data['price'], $data['stock'])) {
-            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), 400);
+            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), 422);
         }
 
         $product->setName($data['name']);
@@ -138,7 +144,6 @@ class ProductApiController extends AbstractController
             $product->setCategory($category);
         }
 
-        // ✅ Validate the Product entity before saving
         $errors = $validator->validate($product);
         if (count($errors) > 0) {
             $errorMessages = [];
@@ -149,26 +154,26 @@ class ProductApiController extends AbstractController
             return $this->json(new ApiResponseDTO(['errors' => $errorMessages]), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $entityManager->flush();
+        $this->entityManager->flush();
 
         return $this->json(new ApiResponseDTO(['status' => 'Product updated!']));
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function delete(Product $product, EntityManagerInterface $entityManager): JsonResponse
+    public function delete(Product $product): JsonResponse
     {
         if (!$this->isOwnedByCurrentUser($product) || $product->isDeleted()) {
             return $this->unauthorizedResponse();
         }
 
         $product->setIsDeleted(true);
-        $entityManager->flush();
+        $this->entityManager->flush();
 
         return $this->json(new ApiResponseDTO(['status' => 'Product deleted']));
     }
 
-    // ✅ PROTECTED UTILITY METHODS
+    // 🔐 PROTECTED UTILITY METHODS
 
     protected function isOwnedByCurrentUser($entity): bool
     {

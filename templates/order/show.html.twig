@@ -1,31 +1,213 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Order Details{% endblock %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .product-image-small {
+            width: 40px;
+            height: 40px;
+            background: var(--gray-100);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-400);
+            font-size: 16px;
+        }
+
+        .quantity-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .order-summary-details {
+            font-size: 14px;
+        }
+
+        .empty-state-small {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state-small .empty-icon {
+            font-size: 48px;
+            color: var(--gray-300);
+            margin-bottom: 16px;
+        }
+    </style>
+{% endblock %}
 
 {% block body %}
-    <h2>Order Details</h2>
+    <div class="content-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Order #{{ order.id }}</h2>
+            <div class="btn-group">
+                <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-modern btn-warning">
+                    <i class="fas fa-edit"></i> Edit Order
+                </a>
+                <a href="{{ path('app_order_index') }}" class="btn-modern btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Orders
+                </a>
+            </div>
+        </div>
+    </div>
 
-    <table class="table table-bordered">
-        <tbody>
-        <tr>
-            <th>ID</th>
-            <td>{{ order.id }}</td>
-        </tr>
-        <tr>
-            <th>Customer Name</th>
-            <td>{{ order.customerName }}</td>
-        </tr>
-        <tr>
-            <th>Status</th>
-            <td>{{ order.status }}</td>
-        </tr>
-        <tr>
-            <th>Created At</th>
-            <td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-        </tr>
-        </tbody>
-    </table>
+    <div class="row">
+        <!-- Order Details -->
+        <div class="col-md-6">
+            <div class="card p-4 shadow-sm mb-4">
+                <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Order Details</h5>
+                <div class="row">
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label text-muted">Customer Name</label>
+                        <div class="fw-medium">{{ order.customerName }}</div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label text-muted">Status</label>
+                        <div>
+                            <span class="badge bg-info text-dark">{{ order.status }}</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label text-muted">Order Date</label>
+                        <div>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i:s') : '' }}</div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label class="form-label text-muted">Total Items</label>
+                        <div class="fw-medium">{{ total_items ?? order.products|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <a href="{{ path('app_order_index') }}" class="btn btn-secondary">← Back to list</a>
+        <!-- Order Summary -->
+        <div class="col-md-6">
+            <div class="card p-4 shadow-sm mb-4">
+                <h5 class="mb-3"><i class="fas fa-calculator me-2"></i>Order Summary</h5>
+                <div class="order-summary-details">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Items:</span>
+                        <span class="fw-medium">{{ total_items ?? order.products|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Products:</span>
+                        <span class="fw-medium">{{ order.products|length }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Total Amount:</span>
+                        <span class="fw-bold text-success">₹{{ total_amount is defined ? total_amount|number_format(2, '.', ',') : '0.00' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Products List -->
+    <div class="card p-4 shadow-sm">
+        <h5 class="mb-3"><i class="fas fa-box me-2"></i>Ordered Products</h5>
+
+        {% if order.products|length > 0 %}
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% if order_items is defined %}
+                        {% for item in order_items %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="product-image-small me-3">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">{{ item.product.name }}</div>
+                                            {% if item.product.description %}
+                                                <small class="text-muted">{{ item.product.description|slice(0, 50) }}{% if item.product.description|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        {{ item.product.category ? item.product.category.name : 'No Category' }}
+                                    </span>
+                                </td>
+                                <td>₹{{ item.product.price|number_format(2, '.', ',') }}</td>
+                                <td>
+                                    <span class="quantity-badge">{{ item.quantity }}</span>
+                                </td>
+                                <td class="fw-medium text-success">₹{{ item.subtotal|number_format(2, '.', ',') }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        {% for product in order.activeProducts %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="product-image-small me-3">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">{{ product.name }}</div>
+                                            {% if product.description %}
+                                                <small class="text-muted">{{ product.description|slice(0, 50) }}{% if product.description|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        {{ product.category ? product.category.name : 'No Category' }}
+                                    </span>
+                                </td>
+                                <td>₹{{ product.price|number_format(2, '.', ',') }}</td>
+                                <td>
+                                    <span class="quantity-badge">1</span>
+                                </td>
+                                <td class="fw-medium text-success">₹{{ product.price|number_format(2, '.', ',') }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state-small">
+                <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+                <p class="text-muted">No products in this order.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-4">
+        <div class="d-flex gap-2">
+            <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-modern btn-warning">
+                <i class="fas fa-edit"></i> Edit Order
+            </a>
+
+            <form method="post" action="{{ path('app_order_delete', {'id': order.id}) }}"
+                  onsubmit="return confirm('Are you sure you want to delete this order? This will restore the product stock.')"
+                  class="d-inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ order.id) }}">
+                <button type="submit" class="btn-modern btn-danger">
+                    <i class="fas fa-trash"></i> Delete Order
+                </button>
+            </form>
+        </div>
+    </div>
 {% endblock %}

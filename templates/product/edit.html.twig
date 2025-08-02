@@ -3,10 +3,39 @@
 {% block title %}Edit Product{% endblock %}
 
 {% block body %}
-    <h2>Edit Product</h2>
+    <div class="content-header">
+        <h2>Edit Product</h2>
+        <nav class="breadcrumb-nav">
+            <a href="{{ path('admin_dashboard') }}" class="breadcrumb-link">Dashboard</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('app_product_index') }}" class="breadcrumb-link">Products</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('app_product_show', {'id': product.id}) }}" class="breadcrumb-link">{{ product.name }}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">Edit</span>
+        </nav>
+    </div>
 
-    {{ include('product/_form.html.twig', {'button_label': 'Update'}) }}
-
-    <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
-
+    <div class="content-body">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="form-container">
+                    {{ include('product/_form.html.twig', {'button_label': 'Update Product'}) }}
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="preview-card">
+                    <h4>Current Image</h4>
+                    {% if product.imageFilename %}
+                        <img src="/uploads/products/{{ product.imageFilename }}" alt="{{ product.name }}" class="current-image">
+                    {% else %}
+                        <div class="no-image-preview">
+                            <i class="fas fa-image"></i>
+                            <p class="text-muted">No image uploaded</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

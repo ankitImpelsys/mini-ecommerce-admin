@@ -1,8 +1,15 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
 
 {% block body %}
-    <h2>Welcome to the Admin Dashboard</h2>
-    <p>Use the menu above to manage Products, Categories, and Orders.</p>
+    <div class="container py-5">
+        <div class="p-5 bg-light rounded-4 shadow-sm text-center">
+            <h1 class="mb-3 fw-bold">Welcome back, Admin 👋</h1>
+            <p class="lead mb-4">
+                Manage your store with ease. You can add new products, organize categories, track orders, and keep everything running smoothly from one place.
+            </p>
+
+        </div>
+    </div>
 {% endblock %}

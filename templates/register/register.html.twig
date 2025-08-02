@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="d-flex justify-content-center align-items-center min-vh-100 bg-light">
+        <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
+            <h2 class="text-center mb-4">Register</h2>
+
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : 'success' }}">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+
+            <form method="post">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email address</label>
+                    <input type="email" name="email" id="email" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" name="password" id="password" class="form-control" required>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-success">Create Account</button>
+                </div>
+
+                <div class="text-center">
+                    <small>Already have an account? <a href="{{ path('login') }}">Login here</a></small>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

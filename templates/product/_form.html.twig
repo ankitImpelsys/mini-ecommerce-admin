@@ -1,28 +1,81 @@
-{{ form_start(form) }}
-<div class="mb-3">
-    {{ form_label(form.name) }}
-    {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
-</div>
-<div class="mb-3">
-    {{ form_label(form.description) }}
-    {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
-</div>
-<div class="mb-3">
-    {{ form_label(form.price) }}
-    {{ form_widget(form.price, {'attr': {'class': 'form-control'}}) }}
-</div>
-<div class="mb-3">
-    {{ form_label(form.stock) }}
-    {{ form_widget(form.stock, {'attr': {'class': 'form-control'}}) }}
-</div>
-<div class="mb-3">
-    {{ form_label(form.imageFilename) }}
-    {{ form_widget(form.imageFilename, {'attr': {'class': 'form-control'}}) }}
-</div>
-<div class="mb-3">
-    {{ form_label(form.category) }}
-    {{ form_widget(form.category, {'attr': {'class': 'form-select'}}) }}
+{{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'class': 'modern-form'}}) }}
+
+<div class="form-grid">
+    <div class="form-group">
+        {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
+        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Enter product name'}}) }}
+        {% if form_errors(form.name) %}
+            <div class="form-error mt-2">
+                {{ form_errors(form.name) }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        {{ form_label(form.price, null, {'label_attr': {'class': 'form-label'}}) }}
+        <div class="input-group">
+            <span class="input-group-text">₹</span>
+            {{ form_widget(form.price, {'attr': {'class': 'form-control', 'placeholder': '0.00', 'step': '0.01'}}) }}
+        </div>
+        {% if form_errors(form.price) %}
+            <div class="form-error mt-2">
+                {{ form_errors(form.price) }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        {{ form_label(form.stock, null, {'label_attr': {'class': 'form-label'}}) }}
+        {{ form_widget(form.stock, {'attr': {'class': 'form-control', 'placeholder': 'Available quantity', 'min': '0'}}) }}
+        {% if form_errors(form.stock) %}
+            <div class="form-error mt-2">
+                {{ form_errors(form.stock) }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        {{ form_label(form.category, null, {'label_attr': {'class': 'form-label'}}) }}
+        {{ form_widget(form.category, {'attr': {'class': 'form-select'}}) }}
+        {% if form_errors(form.category) %}
+            <div class="form-error mt-2">
+                {{ form_errors(form.category) }}
+            </div>
+        {% endif %}
+    </div>
 </div>
 
-<button class="btn btn-primary">{{ button_label|default('Save') }}</button>
+<div class="form-group">
+    {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
+    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Enter product description'}}) }}
+    {% if form_errors(form.description) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.description) }}
+        </div>
+    {% endif %}
+</div>
+
+<div class="form-group">
+    {{ form_label(form.imageFile, null, {'label_attr': {'class': 'form-label'}}) }}
+    <div class="file-upload-container">
+        {{ form_widget(form.imageFile, {'attr': {'class': 'form-control file-input', 'accept': 'image/*'}}) }}
+        <div class="file-upload-hint">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Choose an image file (JPG, PNG, GIF)</span>
+        </div>
+    </div>
+    {% if form_errors(form.imageFile) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.imageFile) }}
+        </div>
+    {% endif %}
+</div>
+
+<div class="form-actions">
+    <button type="submit" class="btn-modern btn-success">
+        <i class="fas fa-save"></i>
+        {{ button_label|default('Save Product') }}
+    </button>
+</div>
+
 {{ form_end(form) }}

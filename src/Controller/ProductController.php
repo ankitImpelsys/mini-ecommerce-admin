@@ -48,7 +48,7 @@ final class ProductController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
+            $this->addFlash('form_error', 'There was an error in your submission. Please check the fields.');
         }
 
 
@@ -108,9 +108,9 @@ final class ProductController extends AbstractController
 
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && !$form->isValid()) {
-            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
-        }
+//        if ($form->isSubmitted() && !$form->isValid()) {
+//            $this->addFlash('error', 'There was an error in your submission. Please check the fields.');
+//        }
 
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -152,7 +152,7 @@ final class ProductController extends AbstractController
         if ($this->isCsrfTokenValid('delete' . $product->getId(), $request->request->get('_token'))) {
             $product->setIsDeleted(true);
             $em->flush();
-            $this->addFlash('success', 'Product soft-deleted successfully.');
+            $this->addFlash('success', 'Product deleted successfully.');
         }
 
         return $this->redirectToRoute('app_product_index');

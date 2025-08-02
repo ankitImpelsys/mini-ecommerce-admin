@@ -3,8 +3,20 @@
 {% block title %}Add Product{% endblock %}
 
 {% block body %}
-    <h2>Add Product</h2>
-    {{ include('product/_form.html.twig') }}
+    <div class="content-header">
+        <h2>Add New Product</h2>
+        <nav class="breadcrumb-nav">
+            <a href="{{ path('admin_dashboard') }}" class="breadcrumb-link">Dashboard</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('app_product_index') }}" class="breadcrumb-link">Products</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">New</span>
+        </nav>
+    </div>
 
-    <a href="{{ path('app_product_index') }}" class="btn btn-secondary mt-3">← Back to list</a>
+    <div class="content-body">
+        <div class="form-container">
+            {{ include('product/_form.html.twig', {'button_label': 'Create Product'}) }}
+        </div>
+    </div>
 {% endblock %}
