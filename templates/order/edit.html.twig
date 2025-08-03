@@ -8,10 +8,13 @@
     </div>
 
     <div class="card p-4 shadow-sm">
-        {{ include('order/_form.html.twig', {'button_label': 'Update'}) }}
+        {{ include('order/_form.html.twig', {
+            'button_label': 'Update Order',
+            'product_quantities': product_quantities
+        }) }}
     </div>
 
-    <a href="{{ path('app_order_index') }}" class="btn-modern btn-secondary mt-3">
+    <a href="{{ path('app_order_index') }}" class="btn btn-secondary mt-3">
         ← Back to list
     </a>
 {% endblock %}

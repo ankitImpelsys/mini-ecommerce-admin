@@ -23,13 +23,13 @@
                     'min': '0.01',
                     'max': '99999.99',
                     'pattern': '[0-9]{1,5}(\\.[0-9]{1,2})?',
-                    'title': 'Price must be between ₹0.01 and ₹99999.99',
+                    'title': 'Price must be between ₹0.01 and ₹9999999.99',
                     'maxlength': '8'
                 }
             }) }}
         </div>
         <div class="price-error-message" style="display: none; color: #dc3545; font-size: 0.875em; margin-top: 0.25rem;">
-            Price must be between ₹0.01 and ₹99999.99
+            Price must be between ₹0.01 and ₹9999999.99
         </div>
         {% if form_errors(form.price) %}
             <div class="form-error mt-2">
@@ -105,14 +105,25 @@
     </button>
 </div>
 
-{# Render any remaining fields that weren't explicitly handled #}
+{# Render CSRF token without label #}
+{% if form._token is defined %}
+    {{ form_widget(form._token) }}
+{% endif %}
+
+{# Render any other remaining fields except CSRF token #}
 {% for field in form %}
-    {% if not field.rendered %}
-        <div class="form-group">
-            {{ form_label(field) }}
+    {% if not field.rendered and field.vars.name != '_token' %}
+        {% if field.vars.block_prefixes[1] == 'hidden' %}
+            {# Hidden fields without labels #}
             {{ form_widget(field) }}
-            {{ form_errors(field) }}
-        </div>
+        {% else %}
+            {# Regular fields with labels #}
+            <div class="form-group">
+                {{ form_label(field) }}
+                {{ form_widget(field) }}
+                {{ form_errors(field) }}
+            </div>
+        {% endif %}
     {% endif %}
 {% endfor %}
 
@@ -140,8 +151,8 @@
                 }
 
                 // Limit to 5 digits before decimal and 2 after
-                if (parts[0] && parts[0].length > 8) {
-                    parts[0] = parts[0].substring(0, 8);
+                if (parts[0] && parts[0].length > 15) {
+                    parts[0] = parts[0].substring(0, 15);
                 }
                 if (parts[1] && parts[1].length > 2) {
                     parts[1] = parts[1].substring(0, 2);
@@ -152,7 +163,7 @@
 
                 // Validate range
                 const numValue = parseFloat(value);
-                if (value && (isNaN(numValue) || numValue < 0.01 || numValue > 999999.99)) {
+                if (value && (isNaN(numValue) || numValue < 0.01 || numValue > 99999.99)) {
                     priceError.style.display = 'block';
                     e.target.setCustomValidity('Invalid price');
                 } else {
