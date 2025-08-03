@@ -1,0 +1,102 @@
+{% if app.user %}
+    <script>
+        // Security script for authenticated pages
+        (function() {
+            'use strict';
+
+            // Check authentication status
+            function checkAuthStatus() {
+                fetch('/check-auth', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    cache: 'no-cache'
+                })
+                    .then(response => {
+                        if (response.status === 401 || response.status === 403) {
+                            // User is not authenticated, redirect to login
+                            window.location.replace('/login');
+                        }
+                    })
+                    .catch(() => {
+                        // If there's an error, redirect to login
+                        window.location.replace('/login');
+                    });
+            }
+
+            // Listen for page show event (when user navigates back)
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted) {
+                    // Page was loaded from cache, check authentication
+                    checkAuthStatus();
+                }
+            });
+
+            // Listen for focus event (when user returns to tab)
+            window.addEventListener('focus', function() {
+                checkAuthStatus();
+            });
+
+            // Check authentication status every 60 seconds
+            setInterval(checkAuthStatus, 60000);
+
+            // Handle logout links and forms
+            document.addEventListener('DOMContentLoaded', function() {
+                // Handle logout links
+                var logoutLinks = document.querySelectorAll('a[href*="logout"]');
+                logoutLinks.forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        // Clear browser data
+                        if ('caches' in window) {
+                            caches.keys().then(function(names) {
+                                names.forEach(function(name) {
+                                    caches.delete(name);
+                                });
+                            });
+                        }
+
+                        if (typeof(Storage) !== "undefined") {
+                            sessionStorage.clear();
+                        }
+
+                        // Replace history to prevent back button issues
+                        if (window.history && window.history.replaceState) {
+                            window.history.replaceState(null, '', '/login');
+                        }
+                    });
+                });
+
+                // Handle logout forms
+                var logoutForms = document.querySelectorAll('form[action*="logout"]');
+                logoutForms.forEach(function(form) {
+                    form.addEventListener('submit', function() {
+                        // Clear browser data
+                        if ('caches' in window) {
+                            caches.keys().then(function(names) {
+                                names.forEach(function(name) {
+                                    caches.delete(name);
+                                });
+                            });
+                        }
+
+                        if (typeof(Storage) !== "undefined") {
+                            sessionStorage.clear();
+                        }
+                    });
+                });
+            });
+
+            // Prevent caching of current page
+            window.addEventListener('beforeunload', function() {
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', window.location.href);
+                }
+            });
+
+        })();
+    </script>
+
+    {# Add cache control meta tags for authenticated pages #}
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+{% endif %}

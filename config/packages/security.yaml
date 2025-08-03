@@ -41,6 +41,9 @@ security:
             logout:
                 path: logout
                 target: /login  # Redirect to login page after logout
+                invalidate_session: true
+                delete_cookies:
+                    PHPSESSID: { path: /, domain: ~ }
             remember_me:
                 secret: '%kernel.secret%'
 
