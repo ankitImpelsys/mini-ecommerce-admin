@@ -67,6 +67,7 @@ class RegisterController extends AbstractController
                 $em->persist($user);
                 $em->flush();
 
+                $this->addFlash('success', 'Account created successfully');
                 return $this->redirectToRoute('login');
             }
         }
