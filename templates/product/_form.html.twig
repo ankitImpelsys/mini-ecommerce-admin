@@ -3,7 +3,7 @@
 <div class="form-grid">
     <div class="form-group">
         {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
-        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Enter product name', 'maxlength': '255'}}) }}
+        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Enter product name', 'maxlength': '30'}}) }}
         {% if form_errors(form.name) %}
             <div class="form-error mt-2">
                 {{ form_errors(form.name) }}

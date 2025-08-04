@@ -20,13 +20,23 @@
             <form method="post">
                 <div class="mb-3">
                     <label for="inputEmail" class="form-label">Email address</label>
-                    <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control" required maxlength="80" autofocus>
+                    <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control"
+                           required maxlength="80" autofocus>
                 </div>
 
                 <div class="mb-3">
                     <label for="inputPassword" class="form-label">Password</label>
-                    <input type="password" name="password" id="inputPassword" class="form-control" required maxlength="80">
+                    <div class="input-group rounded overflow-hidden border">
+                        <input type="password" name="password" id="inputPassword"
+                               class="form-control border-0"
+                               required maxlength="80">
+                        <span class="input-group-text bg-white border-0" style="cursor: pointer;"
+                              onclick="togglePassword(this)">
+                            <i class="bi bi-eye-slash" id="togglePasswordIcon" style="font-size: 0.875rem;"></i>
+                        </span>
+                    </div>
                 </div>
+
 
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
@@ -40,4 +50,34 @@
             </form>
         </div>
     </div>
+
+    <!-- Bootstrap Icons CDN (only if not already included in base.html.twig) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <script>
+        function togglePassword(el) {
+            const input = document.getElementById('inputPassword');
+            const icon = document.getElementById('togglePasswordIcon');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        }
+    </script>
+
+    <style>
+        .input-group-text:hover {
+            background-color: #f1f1f1;
+            transition: background-color 0.2s ease;
+        }
+    </style>
+
+
+
 {% endblock %}

@@ -14,7 +14,7 @@ class Product
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 30)]
     #[Assert\NotBlank(message: 'Name is required.')]
     private ?string $name = null;
 
