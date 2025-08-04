@@ -16,6 +16,7 @@ class Product
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Name is required.')]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -29,7 +30,7 @@ class Product
     )]
     #[Assert\Range(
         min: 0.01,
-        max: 99999.99,
+        max: 9999999.99,
         notInRangeMessage: 'Invalid',
     )]
     private ?float $price = null;
