@@ -8,8 +8,7 @@ use App\Repository\OrderRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
-
-
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
@@ -20,13 +19,26 @@ class Order
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 30)]
+    #[Assert\NotBlank(message: "Customer name is required.")]
+    #[Assert\Length(
+        max: 30,
+        maxMessage: "Customer name cannot be longer than {{ limit }} characters."
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z\s'.-]+$/",
+        message: "Customer name contains invalid characters."
+    )]
     private ?string $customerName = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Status is required.")]
     private ?string $status = null;
 
     #[ORM\Column]
+    #[Assert\NotNull(message: "Created at date is required.")]
+    #[Assert\Type(type: \DateTimeImmutable::class, message: "Invalid date format.")]
+    #[Assert\LessThanOrEqual("now", message: "Created date cannot be in the future.")]
     private ?\DateTimeImmutable $createdAt = null;
 
 
@@ -87,6 +99,7 @@ class Order
 
 
     #[ORM\ManyToMany(targetEntity: Product::class)]
+    #[Assert\NotBlank(message: "Select a product")]
     private Collection $products;
 
     public function __construct()

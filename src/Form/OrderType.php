@@ -37,7 +37,7 @@ class OrderType extends AbstractType
                 ],
                 'placeholder' => 'Choose status...',
                 'attr' => [
-                    'class' => 'form-select'
+                    'class' => 'form-select form-control'
                 ]
             ])
             ->add('createdAt', DateTimeType::class, [

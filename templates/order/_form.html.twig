@@ -1,25 +1,37 @@
 {{ form_start(form) }}
 
 <div class="form-group mb-3">
-    {{ form_label(form.customerName) }}
-    {{ form_widget(form.customerName) }}
-    {{ form_errors(form.customerName) }}
+    {{ form_label(form.customerName, null, {'label_attr': {'class': 'form-label'}}) }}
+    {{ form_widget(form.customerName, {'attr': {'class': 'form-control', 'placeholder': 'Enter customer name', 'maxlength': '30'}}) }}
+    {% if form_errors(form.customerName) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.customerName) }}
+        </div>
+    {% endif %}
 </div>
 
 <div class="form-group mb-3">
-    {{ form_label(form.status) }}
+    {{ form_label(form.status, null, {'label_attr': {'class': 'form-label'}}) }}
     {{ form_widget(form.status) }}
-    {{ form_errors(form.status) }}
+    {% if form_errors(form.status) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.status) }}
+        </div>
+    {% endif %}
 </div>
 
 <div class="form-group mb-3">
-    {{ form_label(form.createdAt) }}
-    {{ form_widget(form.createdAt) }}
-    {{ form_errors(form.createdAt) }}
+    {{ form_label(form.createdAt, null, {'label_attr': {'class': 'form-label'}}) }}
+    {{ form_widget(form.createdAt, {'attr': {'class': 'form-control'}}) }}
+    {% if form_errors(form.createdAt) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.createdAt) }}
+        </div>
+    {% endif %}
 </div>
 
 <div class="form-group mb-4">
-    {{ form_label(form.products) }}
+    {{ form_label(form.products, null, {'label_attr': {'class': 'form-label'}}) }}
     <div class="product-selector-container">
         <!-- Search Input -->
         <div class="product-search-wrapper mb-3">
@@ -55,7 +67,7 @@
 
         <!-- Hidden Original Select (for form submission) -->
         <div style="display: none;">
-            {{ form_widget(form.products) }}
+            {{ form_widget(form.products, {'attr': {'class': 'form-control'}}) }}
         </div>
 
         <!-- Hidden inputs for quantities -->
@@ -72,7 +84,11 @@
             </small>
         </div>
     </div>
-    {{ form_errors(form.products) }}
+    {% if form_errors(form.products) %}
+        <div class="form-error mt-2">
+            {{ form_errors(form.products) }}
+        </div>
+    {% endif %}
 </div>
 
 <button type="submit" class="btn btn-primary">

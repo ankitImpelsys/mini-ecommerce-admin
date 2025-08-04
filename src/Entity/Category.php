@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category
@@ -17,17 +18,30 @@ class Category
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Name is required.')]
+    #[Assert\Length(
+        max: 25,
+        maxMessage: 'Category name cannot exceed {{ limit }} characters.'
+    )]
+    #[Assert\Regex(
+        pattern: '/^[\p{L}0-9\s\-_&@]+$/u',
+        message: 'Category name can only contain letters, numbers, spaces, and - _ & @ characters.'
+    )]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(
+        max: 500,
+        maxMessage: 'Description cannot exceed {{ limit }} characters.'
+    )]
+    #[Assert\Regex(
+        pattern: '/^(?!.*<script\b[^>]*>).*$/i',
+        message: 'Description cannot contain script tags.'
+    )]
     private ?string $description = null;
 
-    /**
-     * @var Collection<int, Product>
-     */
     #[ORM\OneToMany(targetEntity: Product::class, mappedBy: 'category')]
     private Collection $products;
-
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     private ?User $user = null;
