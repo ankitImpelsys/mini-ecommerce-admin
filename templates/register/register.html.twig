@@ -9,7 +9,7 @@
                 <div class="mb-3 px-3">
                     <label for="email" class="form-label">Email address</label>
                     <input type="email" name="email" id="email" class="form-control"
-                           value="{{ email ?? '' }}" required>
+                           value="{{ email ?? '' }}" required maxlength="80">
                     {% if emailError %}
                         <div class="text-danger small mt-1">{{ emailError }}</div>
                     {% endif %}
@@ -26,7 +26,7 @@
                     <div class="input-group rounded overflow-hidden border">
                         <input type="password" name="password" id="password"
                                class="form-control border-0"
-                               value="{{ password ?? '' }}" required>
+                               value="{{ password ?? '' }}" required maxlength="80">
                         <span class="input-group-text bg-white border-0" style="cursor: pointer;"
                               onclick="togglePassword(this)">
                             <i class="bi bi-eye-slash" id="togglePasswordIcon" style="font-size: 0.875rem;"></i>
@@ -40,7 +40,7 @@
                 <div class="mb-3 px-3">
                     <label for="confirm_password" class="form-label">Confirm Password</label>
                     <input type="password" name="confirm_password" id="confirm_password" class="form-control"
-                           value="{{ confirmPassword ?? '' }}" required>
+                           value="{{ confirmPassword ?? '' }}" required maxlength="80">
                     {% if confirmError %}
                         <div class="text-danger small mt-2">{{ confirmError }}</div>
                     {% endif %}
