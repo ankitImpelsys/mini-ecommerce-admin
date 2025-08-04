@@ -37,7 +37,7 @@ class OrderType extends AbstractType
                 ],
                 'placeholder' => 'Choose status...',
                 'attr' => [
-                    'class' => 'form-select'
+                    'class' => 'form-select form-control'
                 ]
             ])
             ->add('createdAt', DateTimeType::class, [
@@ -50,7 +50,7 @@ class OrderType extends AbstractType
             ->add('products', EntityType::class, [
                 'class' => Product::class,
                 'choice_label' => function (Product $product) {
-                    return $product->getName() . ' - $' . number_format($product->getPrice(), 2) . ' (Stock: ' . $product->getStock() . ')';
+                    return $product->getName() . ' - ₹' . number_format($product->getPrice(), 2);
                 },
                 'multiple' => true,
                 'expanded' => false,
@@ -63,7 +63,6 @@ class OrderType extends AbstractType
                     return $er->createQueryBuilder('p')
                         ->where('p.user = :user')
                         ->andWhere('p.isDeleted = false')
-                        ->andWhere('p.stock > 0')
                         ->orderBy('p.name', 'ASC')
                         ->setParameter('user', $user);
                 },

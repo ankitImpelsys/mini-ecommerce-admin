@@ -1,9 +1,9 @@
-{{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'class': 'modern-form'}}) }}
+{{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'class': 'modern-form', 'novalidate': 'novalidate'}}) }}
 
 <div class="form-grid">
     <div class="form-group">
         {{ form_label(form.name, null, {'label_attr': {'class': 'form-label'}}) }}
-        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Enter product name'}}) }}
+        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Enter product name', 'maxlength': '30'}}) }}
         {% if form_errors(form.name) %}
             <div class="form-error mt-2">
                 {{ form_errors(form.name) }}
@@ -15,7 +15,21 @@
         {{ form_label(form.price, null, {'label_attr': {'class': 'form-label'}}) }}
         <div class="input-group">
             <span class="input-group-text">₹</span>
-            {{ form_widget(form.price, {'attr': {'class': 'form-control', 'placeholder': '0.00', 'step': '0.01'}}) }}
+            {{ form_widget(form.price, {
+                'attr': {
+                    'class': 'form-control price-input',
+                    'placeholder': '0.00',
+                    'step': '0.01',
+                    'min': '0.01',
+                    'max': '9999999.99',
+                    'pattern': '[0-9]{1,5}(\\.[0-9]{1,2})?',
+                    'title': 'Price must be between ₹0.01 and ₹9999999.99',
+                    'maxlength': '10'
+                }
+            }) }}
+        </div>
+        <div class="price-error-message" style="display: none; color: #dc3545; font-size: 0.875em; margin-top: 0.25rem;">
+            Price must be between ₹0.01 and ₹9999999.99
         </div>
         {% if form_errors(form.price) %}
             <div class="form-error mt-2">
@@ -26,7 +40,20 @@
 
     <div class="form-group">
         {{ form_label(form.stock, null, {'label_attr': {'class': 'form-label'}}) }}
-        {{ form_widget(form.stock, {'attr': {'class': 'form-control', 'placeholder': 'Available quantity', 'min': '0'}}) }}
+        {{ form_widget(form.stock, {
+            'attr': {
+                'class': 'form-control stock-input',
+                'placeholder': 'Available quantity',
+                'min': '0',
+                'max': '999999',
+                'pattern': '[0-9]{1,6}',
+                'title': 'Stock must be between 0 and 999999',
+                'maxlength': '6'
+            }
+        }) }}
+        <div class="stock-error-message" style="display: none; color: #dc3545; font-size: 0.875em; margin-top: 0.25rem;">
+            Stock must be between 0 and 999,999
+        </div>
         {% if form_errors(form.stock) %}
             <div class="form-error mt-2">
                 {{ form_errors(form.stock) }}
@@ -47,7 +74,7 @@
 
 <div class="form-group">
     {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
-    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Enter product description'}}) }}
+    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Enter product description', 'maxlength': '1000'}}) }}
     {% if form_errors(form.description) %}
         <div class="form-error mt-2">
             {{ form_errors(form.description) }}
@@ -78,4 +105,115 @@
     </button>
 </div>
 
-{{ form_end(form) }}
+{# Render CSRF token without label #}
+{% if form._token is defined %}
+    {{ form_widget(form._token) }}
+{% endif %}
+
+{# Render any other remaining fields except CSRF token #}
+{% for field in form %}
+    {% if not field.rendered and field.vars.name != '_token' %}
+        {% if field.vars.block_prefixes[1] == 'hidden' %}
+            {# Hidden fields without labels #}
+            {{ form_widget(field) }}
+        {% else %}
+            {# Regular fields with labels #}
+            <div class="form-group">
+                {{ form_label(field) }}
+                {{ form_widget(field) }}
+                {{ form_errors(field) }}
+            </div>
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
+{{ form_end(form, {'render_rest': false}) }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const priceInput = document.querySelector('.price-input');
+        const stockInput = document.querySelector('.stock-input');
+        const priceError = document.querySelector('.price-error-message');
+        const stockError = document.querySelector('.stock-error-message');
+
+        // Price validation
+        if (priceInput) {
+            priceInput.addEventListener('input', function(e) {
+                let value = e.target.value;
+
+                // Remove any non-numeric characters except decimal point
+                value = value.replace(/[^0-9.]/g, '');
+
+                // Ensure only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+
+                // Limit to 5 digits before decimal and 2 after
+                if (parts[0] && parts[0].length > 15) {
+                    parts[0] = parts[0].substring(0, 15);
+                }
+                if (parts[1] && parts[1].length > 2) {
+                    parts[1] = parts[1].substring(0, 2);
+                }
+
+                value = parts.join('.');
+                e.target.value = value;
+
+                // Validate range
+                const numValue = parseFloat(value);
+                if (value && (isNaN(numValue) || numValue < 0.01 || numValue > 99999.99)) {
+                    priceError.style.display = 'block';
+                    e.target.setCustomValidity('Invalid price');
+                } else {
+                    priceError.style.display = 'none';
+                    e.target.setCustomValidity('');
+                }
+            });
+
+            // Prevent pasting invalid content
+            priceInput.addEventListener('paste', function(e) {
+                setTimeout(() => {
+                    const event = new Event('input', { bubbles: true });
+                    e.target.dispatchEvent(event);
+                }, 0);
+            });
+        }
+
+        // Stock validation
+        if (stockInput) {
+            stockInput.addEventListener('input', function(e) {
+                let value = e.target.value;
+
+                // Remove any non-numeric characters
+                value = value.replace(/[^0-9]/g, '');
+
+                // Limit to 6 digits
+                if (value.length > 6) {
+                    value = value.substring(0, 6);
+                }
+
+                e.target.value = value;
+
+                // Validate range
+                const numValue = parseInt(value);
+                if (value && (isNaN(numValue) || numValue < 0 || numValue > 999999)) {
+                    stockError.style.display = 'block';
+                    e.target.setCustomValidity('Invalid stock');
+                } else {
+                    stockError.style.display = 'none';
+                    e.target.setCustomValidity('');
+                }
+            });
+
+            // Prevent pasting invalid content
+            stockInput.addEventListener('paste', function(e) {
+                setTimeout(() => {
+                    const event = new Event('input', { bubbles: true });
+                    e.target.dispatchEvent(event);
+                }, 0);
+            });
+        }
+    });
+</script>

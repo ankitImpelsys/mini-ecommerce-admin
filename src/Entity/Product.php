@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Repository\ProductRepository;
@@ -15,29 +14,48 @@ class Product
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 30)]
+    #[Assert\NotBlank(message: 'Name is required.')]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column]
-    #[Assert\PositiveOrZero(message: 'Price must be zero or positive.')]
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Assert\NotBlank(message: 'Price is required.')]
+    #[Assert\Type(
+        type: 'numeric',
+        message: 'Price must be a valid number.'
+    )]
+    #[Assert\Range(
+        min: 0.01,
+        max: 9999999.99,
+        notInRangeMessage: 'Price must be between {{ min }} and {{ max }}.',
+    )]
     private ?float $price = null;
 
     #[ORM\Column]
-    #[Assert\PositiveOrZero(message: 'Stock must be zero or positive.')]
+    #[Assert\NotBlank(message: 'Stock is required.')]
+    #[Assert\Type(
+        type: 'integer',
+        message: 'Stock must be a valid number.'
+    )]
+    #[Assert\Range(
+        min: 0,
+        max: 999999999,
+        notInRangeMessage: 'Stock must be between {{ min }} and {{ max }}.'
+    )]
     private ?int $stock = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $imageFilename = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
+    #[Assert\NotNull(message: 'Category is required.')]
     private ?Category $category = null;
 
     #[ORM\Column(type: 'boolean')]
     private bool $isDeleted = false;
-
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     private ?User $user = null;
@@ -63,10 +81,9 @@ class Product
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(?string $name): static
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -78,7 +95,6 @@ class Product
     public function setDescription(?string $description): static
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -87,10 +103,9 @@ class Product
         return $this->price;
     }
 
-    public function setPrice(float $price): static
+    public function setPrice(?float $price): static
     {
         $this->price = $price;
-
         return $this;
     }
 
@@ -99,10 +114,9 @@ class Product
         return $this->stock;
     }
 
-    public function setStock(int $stock): static
+    public function setStock(?int $stock): static
     {
         $this->stock = $stock;
-
         return $this;
     }
 
@@ -114,7 +128,6 @@ class Product
     public function setImageFilename(?string $imageFilename): static
     {
         $this->imageFilename = $imageFilename;
-
         return $this;
     }
 
@@ -126,7 +139,6 @@ class Product
     public function setCategory(?Category $category): static
     {
         $this->category = $category;
-
         return $this;
     }
 

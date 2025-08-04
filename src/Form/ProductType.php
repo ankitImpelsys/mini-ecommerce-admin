@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Form;
 
 use App\Entity\Category;
@@ -8,25 +7,63 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
-
 
 class ProductType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('name')
-            ->add('description')
-            ->add('price')
-            ->add('stock')
-            //->add('imageFilename')
+            ->add('name', TextType::class, [
+                'label' => 'Product Name',
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Enter product name'
+                ],
+                'required' => true
+            ])
+            ->add('description', null, [
+                'label' => 'Description',
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Enter product description (optional)',
+                    'rows' => 4
+                ],
+                'required' => false
+            ])
+            ->add('price', NumberType::class, [
+                'label' => 'Price (₹)',
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Enter price',
+                    'step' => '0.01',
+                    'min' => '0.01'
+                ],
+                'scale' => 2,
+                'required' => true
+            ])
+            ->add('stock', IntegerType::class, [
+                'label' => 'Stock Quantity',
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Enter stock quantity',
+                    'min' => '0'
+                ],
+                'required' => true
+            ])
             ->add('imageFile', FileType::class, [
                 'label' => 'Product Image (optional)',
                 'mapped' => false,
                 'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'accept' => 'image/*'
+                ],
                 'constraints' => [
                     new File([
                         'maxSize' => '2M',
@@ -54,6 +91,10 @@ class ProductType extends AbstractType
                 'class' => Category::class,
                 'choice_label' => 'name',
                 'placeholder' => 'Choose a category',
+                'attr' => [
+                    'class' => 'form-select'
+                ],
+                'required' => true,
                 'query_builder' => function (\Doctrine\ORM\EntityRepository $er) use ($user) {
                     return $er->createQueryBuilder('c')
                         ->where('c.user = :user')
