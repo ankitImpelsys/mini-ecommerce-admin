@@ -75,14 +75,39 @@
     {{ form_errors(form.products) }}
 </div>
 
-<button type="submit" class="btn-modern btn-primary">
+<button type="submit" class="btn btn-primary">
     <i class="fas fa-save me-2"></i>
     {{ button_label|default('Save Order') }}
 </button>
 
 {{ form_end(form) }}
 
+<!-- Pass product quantities to JavaScript -->
+<script>
+    window.savedProductQuantities = {{ product_quantities|default({})|json_encode|raw }};
+</script>
+
 <style>
+    :root {
+        --primary-color: #4f46e5;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-900: #111827;
+        --white: #ffffff;
+        --border-radius: 0.5rem;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
     .product-selector-container {
         position: relative;
     }
@@ -405,7 +430,7 @@
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('productSearch');
         const resultsContainer = document.getElementById('productResults');
         const selectedDisplay = document.getElementById('selectedProductsDisplay');
@@ -418,12 +443,15 @@
         let selectedProducts = new Map(); // productId -> {product, quantity}
         let allProducts = [];
 
+        // Get saved quantities from PHP
+        const savedQuantities = window.savedProductQuantities || {};
+
         // Extract products from the original select options and preserve selected state
         function initializeProducts() {
             const options = originalSelect.querySelectorAll('option');
             allProducts = Array.from(options).map(option => ({
                 id: option.value,
-                name: option.textContent.split(' - $')[0] || option.textContent.split(' - ₹')[0],
+                name: option.textContent.split(' - ₹')[0] || option.textContent.split(' - $')[0],
                 price: parseFloat(option.dataset.price || '0'),
                 stock: parseInt(option.dataset.stock || '0'),
                 category: option.dataset.category || 'No Category',
@@ -432,28 +460,33 @@
                 selected: option.selected
             })).filter(product => product.id);
 
-            // Initialize selectedProducts Map with pre-selected items (quantity 1)
+            // Initialize selectedProducts Map with pre-selected items and their saved quantities
             allProducts.forEach(product => {
                 if (product.selected) {
+                    // CRITICAL FIX: Ensure all quantities are properly converted to integers
+                    const savedQuantity = parseInt(savedQuantities[product.id]) || 1;
                     selectedProducts.set(product.id, {
                         product: product,
-                        quantity: 1
+                        quantity: savedQuantity // This is now guaranteed to be an integer
                     });
                 }
             });
 
             console.log('Initialized products:', allProducts);
             console.log('Pre-selected products:', Array.from(selectedProducts.keys()));
+            console.log('Saved quantities (converted):', savedQuantities);
         }
 
-        function getAvailableStock(productId) {
+        // Calculate maximum allowable quantity for a product
+        function getMaxAllowableQuantity(productId) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return 0;
 
             const selectedItem = selectedProducts.get(productId);
-            const usedQuantity = selectedItem ? selectedItem.quantity : 0;
+            const currentlySelected = selectedItem ? parseInt(selectedItem.quantity) || 0 : 0;
 
-            return product.stock - usedQuantity;
+            // Maximum = current stock + currently selected quantity (since we can reuse what's already selected)
+            return product.stock + currentlySelected;
         }
 
         function renderResults(products) {
@@ -463,33 +496,35 @@
             }
 
             resultsContainer.innerHTML = products.map(product => {
-                const availableStock = getAvailableStock(product.id);
+                const availableStock = product.stock;
                 const isSelected = selectedProducts.has(product.id);
+                const selectedQuantity = isSelected ? parseInt(selectedProducts.get(product.id).quantity) || 0 : 0;
                 const isOutOfStock = availableStock <= 0 && !isSelected;
 
                 return `
-                <div class="product-item ${isSelected ? 'selected' : ''} ${isOutOfStock ? 'out-of-stock' : ''}"
-                     data-product-id="${product.id}">
-                    <div class="product-image">
-                        <i class="fas fa-box"></i>
-                    </div>
-                    <div class="product-details">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-meta">
-                            <span class="product-price">₹${product.price.toFixed(2)}</span>
-                            <span>•</span>
-                            <span>${product.category}</span>
-                            <span>•</span>
-                            <span class="product-stock">
-                                <span class="stock-indicator ${availableStock <= 5 ? (availableStock === 0 ? 'out' : 'low') : ''}"></span>
-                                ${availableStock} available
-                            </span>
-                            ${isSelected ? `<span>• <i class="fas fa-check text-success"></i> Selected (${selectedProducts.get(product.id).quantity})</span>` : ''}
-                            ${isOutOfStock ? '<span class="out-of-stock-badge">Out of Stock</span>' : ''}
-                        </div>
+            <div class="product-item ${isSelected ? 'selected' : ''} ${isOutOfStock ? 'out-of-stock' : ''}"
+                 data-product-id="${product.id}">
+                <div class="product-image">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="product-details">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-meta">
+                        <span class="product-price">₹${product.price.toFixed(2)}</span>
+                        <span>•</span>
+                        <span>${product.category}</span>
+                        <span>•</span>
+                        <span class="product-stock">
+                            <span class="stock-indicator ${availableStock <= 5 ? (availableStock === 0 ? 'out' : 'low') : ''}"></span>
+                            ${availableStock} in stock
+                            ${isSelected ? ` (${selectedQuantity} selected)` : ''}
+                        </span>
+                        ${isSelected ? `<span>• <i class="fas fa-check text-success"></i> Selected (${selectedQuantity})</span>` : ''}
+                        ${isOutOfStock ? '<span class="out-of-stock-badge">Out of Stock</span>' : ''}
                     </div>
                 </div>
-            `;
+            </div>
+        `;
             }).join('');
         }
 
@@ -498,8 +533,9 @@
             let totalAmount = 0;
 
             selectedProducts.forEach(({product, quantity}) => {
-                totalItems += quantity;
-                totalAmount += product.price * quantity;
+                const qty = parseInt(quantity) || 0; // Ensure integer calculation
+                totalItems += qty;
+                totalAmount += product.price * qty;
             });
 
             totalItemsSpan.textContent = totalItems;
@@ -516,26 +552,31 @@
 
             const selectedProductsArray = Array.from(selectedProducts.values());
 
-            selectedList.innerHTML = selectedProductsArray.map(({product, quantity}) => `
-                <div class="selected-product-item">
-                    <div class="selected-product-info">
-                        <div class="selected-product-name">${product.name}</div>
-                        <div class="selected-product-price">₹${product.price.toFixed(2)} each</div>
-                    </div>
-                    <div class="quantity-controls">
-                        <button type="button" class="quantity-btn decrease-btn" data-product-id="${product.id}" ${quantity <= 1 ? 'disabled' : ''}>
-                            −
-                        </button>
-                        <input type="number" class="quantity-input" value="${quantity}" min="1" max="${product.stock}" data-product-id="${product.id}" readonly>
-                        <button type="button" class="quantity-btn increase-btn" data-product-id="${product.id}" ${quantity >= product.stock ? 'disabled' : ''}>
-                            +
-                        </button>
-                    </div>
-                    <button type="button" class="remove-product" data-product-id="${product.id}">
-                        <i class="fas fa-times"></i>
+            selectedList.innerHTML = selectedProductsArray.map(({product, quantity}) => {
+                const qty = parseInt(quantity) || 1; // Ensure quantity is integer for display
+                const maxQuantity = getMaxAllowableQuantity(product.id);
+
+                return `
+            <div class="selected-product-item">
+                <div class="selected-product-info">
+                    <div class="selected-product-name">${product.name}</div>
+                    <div class="selected-product-price">₹${product.price.toFixed(2)} each | Stock: ${product.stock}</div>
+                </div>
+                <div class="quantity-controls">
+                    <button type="button" class="quantity-btn decrease-btn" data-product-id="${product.id}" ${qty <= 1 ? 'disabled' : ''}>
+                        −
+                    </button>
+                    <input type="number" class="quantity-input" value="${qty}" min="1" max="${maxQuantity}" data-product-id="${product.id}" readonly>
+                    <button type="button" class="quantity-btn increase-btn" data-product-id="${product.id}" ${qty >= maxQuantity ? 'disabled' : ''}>
+                        +
                     </button>
                 </div>
-            `).join('');
+                <button type="button" class="remove-product" data-product-id="${product.id}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+            }).join('');
 
             updateTotals();
         }
@@ -554,7 +595,7 @@
                 const quantityInput = document.createElement('input');
                 quantityInput.type = 'hidden';
                 quantityInput.name = `product_quantities[${productId}]`;
-                quantityInput.value = quantity;
+                quantityInput.value = parseInt(quantity) || 1; // Ensure integer value
                 quantityInputsContainer.appendChild(quantityInput);
             });
 
@@ -566,12 +607,12 @@
             const product = allProducts.find(p => p.id === productId);
             if (!product) return false;
 
-            const availableStock = getAvailableStock(productId);
-            if (availableStock <= 0) return false;
+            const maxQuantity = getMaxAllowableQuantity(productId);
+            if (maxQuantity <= 0) return false;
 
             selectedProducts.set(productId, {
                 product: product,
-                quantity: 1
+                quantity: 1 // Always start with integer 1
             });
 
             updateFormInputs();
@@ -590,8 +631,13 @@
             if (!selectedItem) return;
 
             const product = selectedItem.product;
-            newQuantity = Math.max(1, Math.min(newQuantity, product.stock));
+            const maxQuantity = getMaxAllowableQuantity(productId);
 
+            // CRITICAL FIX: Ensure newQuantity is always an integer
+            newQuantity = parseInt(newQuantity) || 1;
+            newQuantity = Math.max(1, Math.min(newQuantity, maxQuantity));
+
+            // Store as integer
             selectedProducts.set(productId, {
                 product: product,
                 quantity: newQuantity
@@ -600,7 +646,7 @@
             updateFormInputs();
             renderSelectedProducts();
 
-            // Re-render results to update available quantities
+            // Re-render results to update stock display
             const currentQuery = searchInput.value.toLowerCase();
             const productsToShow = currentQuery ?
                 allProducts.filter(p =>
@@ -617,7 +663,7 @@
         resultsContainer.classList.add('show-all');
 
         // Search functionality
-        searchInput.addEventListener('input', function(e) {
+        searchInput.addEventListener('input', function (e) {
             const query = e.target.value.toLowerCase().trim();
 
             if (query.length === 0) {
@@ -639,7 +685,7 @@
         });
 
         // Handle clicks on search results
-        resultsContainer.addEventListener('click', function(e) {
+        resultsContainer.addEventListener('click', function (e) {
             const productItem = e.target.closest('.product-item');
             if (productItem && !productItem.classList.contains('out-of-stock')) {
                 const productId = productItem.dataset.productId;
@@ -661,8 +707,8 @@
             }
         });
 
-        // Handle quantity controls
-        selectedList.addEventListener('click', function(e) {
+        // Handle quantity controls - FIXED VERSION
+        selectedList.addEventListener('click', function (e) {
             const productId = e.target.closest('[data-product-id]')?.dataset.productId;
             if (!productId) return;
 
@@ -678,16 +724,20 @@
                     ) : allProducts;
                 renderResults(productsToShow);
             } else if (e.target.closest('.increase-btn')) {
-                const currentQuantity = selectedProducts.get(productId).quantity;
+                // CRITICAL FIX: Always ensure we get an integer
+                const selectedItem = selectedProducts.get(productId);
+                const currentQuantity = parseInt(selectedItem.quantity) || 1;
                 changeQuantity(productId, currentQuantity + 1);
             } else if (e.target.closest('.decrease-btn')) {
-                const currentQuantity = selectedProducts.get(productId).quantity;
+                // CRITICAL FIX: Always ensure we get an integer
+                const selectedItem = selectedProducts.get(productId);
+                const currentQuantity = parseInt(selectedItem.quantity) || 1;
                 changeQuantity(productId, currentQuantity - 1);
             }
         });
 
         // Hide results when clicking outside (only in dropdown mode)
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!e.target.closest('.product-selector-container') &&
                 resultsContainer.classList.contains('dropdown-mode')) {
                 resultsContainer.classList.remove('dropdown-mode');
@@ -698,7 +748,7 @@
         });
 
         // Handle search input focus
-        searchInput.addEventListener('focus', function() {
+        searchInput.addEventListener('focus', function () {
             if (this.value.trim().length > 0) {
                 resultsContainer.classList.remove('show-all');
                 resultsContainer.classList.add('dropdown-mode');
@@ -706,17 +756,19 @@
         });
 
         // Form submission validation
-        document.querySelector('form').addEventListener('submit', function(e) {
-            let hasOutOfStockItems = false;
+        document.querySelector('form').addEventListener('submit', function (e) {
+            let hasInvalidQuantities = false;
 
             selectedProducts.forEach(({product, quantity}, productId) => {
-                if (quantity > product.stock) {
-                    hasOutOfStockItems = true;
-                    alert(`Not enough stock for ${product.name}. Available: ${product.stock}, Requested: ${quantity}`);
+                const qty = parseInt(quantity) || 1;
+                const maxQuantity = getMaxAllowableQuantity(productId);
+                if (qty > maxQuantity) {
+                    hasInvalidQuantities = true;
+                    alert(`Not enough stock for ${product.name}. Maximum available: ${maxQuantity}, Requested: ${qty}`);
                 }
             });
 
-            if (hasOutOfStockItems) {
+            if (hasInvalidQuantities) {
                 e.preventDefault();
                 return false;
             }

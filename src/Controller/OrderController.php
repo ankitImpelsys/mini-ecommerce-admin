@@ -68,13 +68,14 @@ final class OrderController extends AbstractController
                 return $this->render('order/new.html.twig', [
                     'order' => $order,
                     'form' => $form,
+                    'product_quantities' => $productQuantities,
                 ]);
             }
 
             // Set order properties
             $order->setUser($this->getUser());
             $order->setCreatedAt(new \DateTimeImmutable());
-            $order->setStatus('Pending');
+            $order->setStatus('pending');
 
             // Update stock
             foreach ($order->getProducts() as $product) {
@@ -100,6 +101,7 @@ final class OrderController extends AbstractController
         return $this->render('order/new.html.twig', [
             'order' => $order,
             'form' => $form,
+            'product_quantities' => [],
         ]);
     }
 
@@ -216,6 +218,7 @@ final class OrderController extends AbstractController
                 return $this->render('order/edit.html.twig', [
                     'order' => $order,
                     'form' => $form,
+                    'product_quantities' => $originalQuantities,
                 ]);
             }
 
@@ -240,6 +243,7 @@ final class OrderController extends AbstractController
         return $this->render('order/edit.html.twig', [
             'order' => $order,
             'form' => $form,
+            'product_quantities' => $originalQuantities,
         ]);
     }
 
