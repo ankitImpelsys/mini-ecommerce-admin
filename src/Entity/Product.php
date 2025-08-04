@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Repository\ProductRepository;
@@ -31,7 +30,7 @@ class Product
     #[Assert\Range(
         min: 0.01,
         max: 9999999.99,
-        notInRangeMessage: 'Invalid',
+        notInRangeMessage: 'Price must be between {{ min }} and {{ max }}.',
     )]
     private ?float $price = null;
 
@@ -52,6 +51,7 @@ class Product
     private ?string $imageFilename = null;
 
     #[ORM\ManyToOne(inversedBy: 'products')]
+    #[Assert\NotNull(message: 'Category is required.')]
     private ?Category $category = null;
 
     #[ORM\Column(type: 'boolean')]
@@ -81,7 +81,7 @@ class Product
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(?string $name): static
     {
         $this->name = $name;
         return $this;
@@ -103,7 +103,7 @@ class Product
         return $this->price;
     }
 
-    public function setPrice(float $price): static
+    public function setPrice(?float $price): static
     {
         $this->price = $price;
         return $this;
@@ -114,7 +114,7 @@ class Product
         return $this->stock;
     }
 
-    public function setStock(int $stock): static
+    public function setStock(?int $stock): static
     {
         $this->stock = $stock;
         return $this;
