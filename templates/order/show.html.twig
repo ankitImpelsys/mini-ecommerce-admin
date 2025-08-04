@@ -47,9 +47,13 @@
         <div class="d-flex justify-content-between align-items-center">
             <h2>Order #{{ order.id }}</h2>
             <div class="btn-group">
-                <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-modern btn-warning">
-                    <i class="fas fa-edit"></i> Edit Order
-                </a>
+                {% if order.status not in ['shipped', 'delivered', 'cancelled'] %}
+                    <a href="{{ path('app_order_edit', {'id': order.id}) }}"
+                       class="btn-modern btn-warning btn-sm">
+                        <i class="fas fa-edit"></i> Edit Order
+                    </a>
+                {% endif %}
+
                 <a href="{{ path('app_order_index') }}" class="btn-modern btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Orders
                 </a>
@@ -196,9 +200,9 @@
     <!-- Actions -->
     <div class="mt-4">
         <div class="d-flex gap-2">
-            <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-modern btn-warning">
-                <i class="fas fa-edit"></i> Edit Order
-            </a>
+{#            <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-modern btn-warning">#}
+{#                <i class="fas fa-edit"></i> Edit Order#}
+{#            </a>#}
 
             <form method="post" action="{{ path('app_order_delete', {'id': order.id}) }}"
                   onsubmit="return confirm('Are you sure you want to delete this order? This will restore the product stock.')"

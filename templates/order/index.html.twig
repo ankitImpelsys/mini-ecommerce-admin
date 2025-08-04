@@ -28,19 +28,22 @@
                     </thead>
                     <tbody>
                     {% for order in orders %}
-                        <tr>
+                        <tr class="clickable-row" data-href="{{ path('app_order_show', {'id': order.id}) }}">
+
                             <td><span class="text-muted">#{{ order.id }}</span></td>
-                            <td><div class="fw-medium">{{ order.customerName }}</div></td>
+                            <td>
+                                <div class="fw-medium">{{ order.customerName }}</div>
+                            </td>
                             <td><span class="badge bg-info text-dark">{{ order.status }}</span></td>
                             <td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i') : '' }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ path('app_order_show', {'id': order.id}) }}" class="btn-modern btn-primary btn-sm">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                    <a href="{{ path('app_order_edit', {'id': order.id}) }}" class="btn-modern btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
+                                    {% if order.status not in ['shipped', 'delivered', 'cancelled'] %}
+                                        <a href="{{ path('app_order_edit', {'id': order.id}) }}"
+                                           class="btn-modern btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -59,4 +62,24 @@
             </div>
         {% endif %}
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.clickable-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    window.location.href = row.dataset.href;
+                });
+            });
+        });
+    </script>
+
+    <style>
+        .clickable-row {
+            cursor: pointer;
+        }
+        .clickable-row:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+
+
 {% endblock %}
