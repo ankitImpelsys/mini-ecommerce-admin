@@ -27,6 +27,22 @@ class OrderRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function searchOrdersByUserAndKeyword(User $user, ?string $search): array
+    {
+        $qb = $this->createQueryBuilder('o')
+            ->andWhere('o.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('o.id', 'DESC');
+
+        if ($search) {
+            $qb->andWhere('LOWER(o.customerName) LIKE :search OR LOWER(o.status) LIKE :search')
+                ->setParameter('search', '%' . strtolower($search) . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+
 
     //    /**
     //     * @return Order[] Returns an array of Order objects

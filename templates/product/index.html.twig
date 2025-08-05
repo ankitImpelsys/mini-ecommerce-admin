@@ -21,6 +21,15 @@
     </div>
 
     <div class="content-body">
+        <div class="search-bar mb-4">
+            <form method="get" action="{{ path('app_product_index') }}" class="d-flex">
+                <input type="text" name="q" value="{{ app.request.get('q') }}" class="form-control me-2" placeholder="Search by name or description...">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+
         {% if products|length > 0 %}
             <div class="table-container">
                 <table class="modern-table">

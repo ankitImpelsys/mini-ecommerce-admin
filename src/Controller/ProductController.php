@@ -29,10 +29,14 @@ final class ProductController extends AbstractController
 
 
     #[Route(name: 'app_product_index', methods: ['GET'])]
-    public function index(ProductRepository $productRepository): Response
+    public function index(Request $request, ProductRepository $productRepository): Response
     {
+        $search = $request->query->get('q');
+
+        $products = $productRepository->searchActiveByUserAndTerm($this->getUser(), $search);
+
         return $this->render('product/index.html.twig', [
-            'products' => $productRepository->findAllActiveByUser($this->getUser()),
+            'products' => $products,
         ]);
     }
 
@@ -157,5 +161,7 @@ final class ProductController extends AbstractController
 
         return $this->redirectToRoute('app_product_index');
     }
+
+
 
 }

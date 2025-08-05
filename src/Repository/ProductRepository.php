@@ -36,6 +36,24 @@ class ProductRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function searchActiveByUserAndTerm($user, ?string $search = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.category', 'c')
+            ->addSelect('c')
+            ->where('p.isDeleted = false') // Assuming soft delete
+            ->andWhere('p.user = :user')
+            ->setParameter('user', $user);
+
+        if ($search) {
+            $qb->andWhere('p.name LIKE :search OR p.description LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+
 
     //    /**
     //     * @return Product[] Returns an array of Product objects

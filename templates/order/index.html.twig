@@ -14,6 +14,14 @@
     </div>
 
     <div class="content-body">
+        <div class="mb-4">
+            <form method="get" action="{{ path('app_order_index') }}" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="Search orders..."
+                       value="{{ search ?? '' }}">
+                <button type="submit" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+
         {% if orders|length > 0 %}
             <div class="table-container">
                 <table class="modern-table">
@@ -76,6 +84,7 @@
         .clickable-row {
             cursor: pointer;
         }
+
         .clickable-row:hover {
             background-color: #f8f9fa;
         }

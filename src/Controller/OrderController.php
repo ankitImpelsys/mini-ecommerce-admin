@@ -17,10 +17,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class OrderController extends AbstractController
 {
     #[Route(name: 'app_order_index', methods: ['GET'])]
-    public function index(OrderRepository $orderRepository): Response
+    public function index(Request $request, OrderRepository $orderRepository): Response
     {
+        $search = $request->query->get('q');
+        $orders = $orderRepository->searchOrdersByUserAndKeyword($this->getUser(), $search);
+
         return $this->render('order/index.html.twig', [
-            'orders' => $orderRepository->findAllByUser($this->getUser()),
+            'orders' => $orders,
+            'search' => $search,
         ]);
     }
 
@@ -267,7 +271,6 @@ final class OrderController extends AbstractController
             $session = $request->getSession();
             $quantity = $quantities[$product->getId()] ?? null;
             if ($quantity === null) {
-                $this->addFlash('error', 'Order quantity missing for product ' . $product->getName());
                 $quantity = 1; // fallback only if really missing
             }
 
