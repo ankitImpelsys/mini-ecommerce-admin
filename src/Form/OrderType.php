@@ -32,7 +32,6 @@ class OrderType extends AbstractType
                     'Pending' => 'pending',
                     'Processing' => 'processing',
                     'Shipped' => 'shipped',
-                    'Delivered' => 'delivered'
                 ],
                 'placeholder' => 'Choose status...',
                 'attr' => [

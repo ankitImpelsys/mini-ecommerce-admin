@@ -290,4 +290,22 @@ final class OrderController extends AbstractController
 
         return $this->redirectToRoute('app_order_index', [], Response::HTTP_SEE_OTHER);
     }
+
+    #[Route('/{id}/deliver', name: 'app_order_deliver', methods: ['POST'])]
+    public function markAsDelivered(Request $request, Order $order, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('deliver' . $order->getId(), $request->request->get('_token'))) {
+
+            if ($order->getStatus() !== 'delivered') {
+                $order->setStatus('delivered');
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Order marked as delivered.');
+            }
+        }
+
+        return $this->redirectToRoute('app_order_show', ['id' => $order->getId()]);
+    }
+
+
 }
