@@ -231,7 +231,10 @@ final class OrderController extends AbstractController
             }
 
             // Update stored quantities
-            $session->set('order_quantities_' . $order->getId(), $newQuantities);
+            if (!empty($newQuantities)) {
+                $session->set('order_quantities_' . $order->getId(), $newQuantities);
+            }
+
 
             $entityManager->flush();
 
@@ -262,7 +265,12 @@ final class OrderController extends AbstractController
 
             // Restore stock using stored quantities
             $session = $request->getSession();
-            $quantities = $session->get('order_quantities_' . $order->getId(), []);
+            $quantity = $quantities[$product->getId()] ?? null;
+            if ($quantity === null) {
+                $this->addFlash('error', 'Order quantity missing for product ' . $product->getName());
+                $quantity = 1; // fallback only if really missing
+            }
+
 
             foreach ($order->getProducts() as $product) {
                 $productId = $product->getId();

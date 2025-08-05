@@ -38,7 +38,7 @@
                             <td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i') : '' }}</td>
                             <td>
                                 <div class="btn-group">
-                                    {% if order.status not in ['shipped', 'delivered', 'cancelled'] %}
+                                    {% if order.status not in ['shipped', 'delivered'] %}
                                         <a href="{{ path('app_order_edit', {'id': order.id}) }}"
                                            class="btn-modern btn-warning btn-sm">
                                             <i class="fas fa-edit"></i>
