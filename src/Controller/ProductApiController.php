@@ -57,10 +57,11 @@ class ProductApiController extends AbstractController
     #[Route('', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function create(
-        Request $request,
+        Request            $request,
         CategoryRepository $categoryRepo,
         ValidatorInterface $validator
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $data = json_decode($request->getContent(), true);
 
         if ($data === null || !is_array($data)) {
@@ -128,31 +129,42 @@ class ProductApiController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if ($data === null) {
-            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), 422);
+        if ($data === null || !is_array($data)) {
+            return $this->json(new ApiResponseDTO(['error' => 'Invalid JSON']), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        if (!isset($data['name'], $data['price'], $data['stock'])) {
-            return $this->json(new ApiResponseDTO(['error' => 'Missing required fields: name, price, stock']), 422);
+        $productInput = ProductInputDTO::fromArray($data);
+
+        $errors = $validator->validate($productInput);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            return $this->json(new ApiResponseDTO(['errors' => $errorMessages]), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $product->setName($data['name']);
-        $product->setDescription($data['description'] ?? null);
-        $product->setPrice($data['price']);
-        $product->setStock($data['stock']);
-
-        if (isset($data['category_id'])) {
-            $category = $categoryRepo->find($data['category_id']);
+        // Validate and assign category (optional on update)
+        if ($productInput->category_id !== null) {
+            $category = $categoryRepo->find($productInput->category_id);
             if (!$category || !$this->isOwnedByCurrentUser($category)) {
                 return $this->unauthorizedResponse('Invalid or unauthorized category');
             }
             $product->setCategory($category);
         }
 
-        $errors = $validator->validate($product);
-        if (count($errors) > 0) {
+        // Update product fields
+        $product->setName($productInput->name);
+        $product->setDescription($productInput->description);
+        $product->setPrice($productInput->price);
+        $product->setStock($productInput->stock);
+
+        // Validate entity-level rules
+        $entityErrors = $validator->validate($product);
+        if (count($entityErrors) > 0) {
             $errorMessages = [];
-            foreach ($errors as $error) {
+            foreach ($entityErrors as $error) {
                 $errorMessages[$error->getPropertyPath()] = $error->getMessage();
             }
 
