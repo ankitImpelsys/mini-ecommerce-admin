@@ -4,7 +4,7 @@ namespace App\DTO;
 
 use App\Entity\Product;
 
-class ProductDTO
+class   ProductDTO
 {
     public string $name;
     public float $price;
