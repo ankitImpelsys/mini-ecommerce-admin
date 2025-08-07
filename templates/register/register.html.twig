@@ -11,7 +11,7 @@
                     <input type="email" name="email" id="email" class="form-control"
                            value="{{ email ?? '' }}" required maxlength="80">
                     {% if emailError %}
-                        <div class="text-danger small mt-1">{{ emailError }}</div>
+                        <div class="error text-danger small mt-1">{{ emailError }}</div>
                     {% endif %}
                 </div>
 
@@ -33,7 +33,7 @@
                         </span>
                     </div>
                     {% if passwordError %}
-                        <div class="text-danger small mt-2">{{ passwordError }}</div>
+                        <div class="error text-danger small mt-2">{{ passwordError }}</div>
                     {% endif %}
                 </div>
 
@@ -42,7 +42,7 @@
                     <input type="password" name="confirm_password" id="confirm_password" class="form-control"
                            value="{{ confirmPassword ?? '' }}" required maxlength="80">
                     {% if confirmError %}
-                        <div class="text-danger small mt-2">{{ confirmError }}</div>
+                        <div class="error text-danger small mt-2">{{ confirmError }}</div>
                     {% endif %}
                 </div>
 
