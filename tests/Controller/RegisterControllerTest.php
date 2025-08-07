@@ -41,7 +41,7 @@ class RegisterControllerTest extends WebTestCase
     {
         // Create a user manually
         $user = new User();
-        $user->setEmail('duplicate@example.com');
+        $user->setEmail('duplicate_' . uniqid() . '@example.com');
         $user->setPassword('dummy');
         $user->setRoles(['ROLE_ADMIN']);
         $this->em->persist($user);
