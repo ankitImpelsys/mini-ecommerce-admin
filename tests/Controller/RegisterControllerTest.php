@@ -4,7 +4,8 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Response;
+use App\Tests\DataProvider\RegisterDataProvider;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class RegisterControllerTest extends WebTestCase
 {
@@ -16,7 +17,6 @@ class RegisterControllerTest extends WebTestCase
         $this->client = static::createClient();
         $this->em = static::getContainer()->get('doctrine')->getManager();
 
-        // Clean up any test users
         $user = $this->em->getRepository(User::class)->findOneBy(['email' => 'test@example.com']);
         if ($user) {
             $this->em->remove($user);
@@ -26,7 +26,7 @@ class RegisterControllerTest extends WebTestCase
 
     public function testSuccessfulRegistration(): void
     {
-        $crawler = $this->client->request('POST', '/register', [
+        $this->client->request('POST', '/register', [
             'email' => 'test@example.com',
             'password' => 'Valid@123',
             'confirm_password' => 'Valid@123',
@@ -39,15 +39,20 @@ class RegisterControllerTest extends WebTestCase
 
     public function testEmailAlreadyExists(): void
     {
-        // Create a user manually
+        $existing = $this->em->getRepository(User::class)->findOneBy(['email' => 'duplicate@example.com']);
+        if ($existing) {
+            $this->em->remove($existing);
+            $this->em->flush();
+        }
+
         $user = new User();
-        $user->setEmail('duplicate_' . uniqid() . '@example.com');
+        $user->setEmail('duplicate@example.com');
         $user->setPassword('dummy');
         $user->setRoles(['ROLE_ADMIN']);
         $this->em->persist($user);
         $this->em->flush();
 
-        $crawler = $this->client->request('POST', '/register', [
+        $this->client->request('POST', '/register', [
             'email' => 'duplicate@example.com',
             'password' => 'Valid@123',
             'confirm_password' => 'Valid@123',
@@ -57,39 +62,21 @@ class RegisterControllerTest extends WebTestCase
         $this->assertSelectorTextContains('.error', 'Email already in use.');
     }
 
-    public function testPasswordTooShort(): void
+    public static function provideInvalidPasswords(): array
     {
-        $this->client->request('POST', '/register', [
-            'email' => 'shortpass@example.com',
-            'password' => 'A@1',
-            'confirm_password' => 'A@1',
-        ]);
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.error', 'Password must be at least 6 characters.');
+        return RegisterDataProvider::invalidPasswords();
     }
 
-    public function testPasswordMissingUppercase(): void
+    #[DataProvider('provideInvalidPasswords')]
+    public function testInvalidPasswords(string $email, string $password, string $confirmPassword, string $expectedError): void
     {
         $this->client->request('POST', '/register', [
-            'email' => 'noupcase@example.com',
-            'password' => 'valid@123',
-            'confirm_password' => 'valid@123',
+            'email' => $email,
+            'password' => $password,
+            'confirm_password' => $confirmPassword,
         ]);
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.error', 'Password must contain at least one uppercase letter.');
-    }
-
-    public function testPasswordsDoNotMatch(): void
-    {
-        $this->client->request('POST', '/register', [
-            'email' => 'mismatch@example.com',
-            'password' => 'Valid@123',
-            'confirm_password' => 'Mismatch@123',
-        ]);
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('.error', 'Passwords do not match.');
+        $this->assertSelectorTextContains('.error', $expectedError);
     }
 }
